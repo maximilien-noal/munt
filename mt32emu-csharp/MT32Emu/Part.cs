@@ -20,46 +20,91 @@ namespace MT32Emu;
 using Bit8u = System.Byte;
 using Bit16s = System.Int16;
 
+using Bit32u = System.UInt32;
+
 // Stub class - to be implemented
 public class Part
 {
+    private readonly Synth synth;
+    private Bit32u activePartialCount;
+    private Bit32u activeNonReleasingPolyCount;
+
+    public Part(Synth useSynth, uint partNum)
+    {
+        synth = useSynth;
+        activePartialCount = 0;
+        activeNonReleasingPolyCount = 0;
+    }
+
     public Synth GetSynth()
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        return synth;
     }
 
     public void PolyStateChanged(PolyState oldState, PolyState newState)
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        // Stub - to be implemented
+        if (oldState != PolyState.POLY_Releasing && newState == PolyState.POLY_Releasing)
+        {
+            if (activeNonReleasingPolyCount > 0)
+                activeNonReleasingPolyCount--;
+        }
     }
 
     public void PartialDeactivated(Poly poly)
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        // Stub - to be implemented
+        if (activePartialCount > 0)
+            activePartialCount--;
     }
 
     public Bit8u GetVolume()
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        return 100; // Stub
     }
 
     public Bit8u GetExpression()
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        return 127; // Stub
     }
 
     public unsafe MemParams.PatchTemp* GetPatchTemp()
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        throw new NotImplementedException("Part.GetPatchTemp() needs full implementation");
     }
 
     public Bit16s GetPitchBend()
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        return 0; // Stub
     }
 
     public Bit8u GetModulation()
     {
-        throw new NotImplementedException("Part class needs full implementation");
+        return 0; // Stub
+    }
+
+    public Bit32u GetActivePartialCount()
+    {
+        return activePartialCount;
+    }
+
+    public Bit32u GetActiveNonReleasingPartialCount()
+    {
+        return activeNonReleasingPolyCount;
+    }
+
+    public bool AbortFirstPoly(PolyState polyState)
+    {
+        return false; // Stub
+    }
+
+    public bool AbortFirstPolyPreferHeld()
+    {
+        return false; // Stub
+    }
+
+    public Poly? GetFirstActivePoly()
+    {
+        return null; // Stub
     }
 }

@@ -34,6 +34,7 @@ public class Synth
     public Poly? abortingPoly;
     public ControlROMFeatureSet controlROMFeatures;
     public IReportHandler? reportHandler;
+    private Bit32u partialCount = Globals.DEFAULT_MAX_PARTIALS;
 
     public void PrintDebug(string message)
     {
@@ -43,6 +44,16 @@ public class Synth
     public bool IsAbortingPoly()
     {
         return abortingPoly != null;
+    }
+
+    public Bit32u GetPartialCount()
+    {
+        return partialCount;
+    }
+
+    public Part GetPart(int partNum)
+    {
+        throw new NotImplementedException("Synth.GetPart() needs full implementation");
     }
 
     public unsafe MemParams.System* GetSystemPtr()
