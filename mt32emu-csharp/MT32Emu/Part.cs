@@ -306,6 +306,14 @@ public class Part
         return new string(currentInstr, 0, 10).TrimEnd('\0');
     }
 
+    public void GetCurrentInstrBytes(Span<byte> buffer)
+    {
+        for (int i = 0; i < Math.Min(10, buffer.Length); i++)
+        {
+            buffer[i] = (byte)currentInstr[i];
+        }
+    }
+
     public virtual void RefreshTimbre(uint absTimbreNum)
     {
         if (GetAbsTimbreNum() == absTimbreNum)

@@ -11,7 +11,7 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 
 ## Current Status
 
-**28 files completed** - Core infrastructure and synthesis components operational:
+**30 files completed** - Core infrastructure and synthesis components operational:
 
 ### ✅ Completed Components
 
@@ -47,17 +47,23 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 **Audio Processing (1 file)**
 - [x] SampleRateConverter - Sample rate conversion and timestamp utilities (SampleRateConverter.cs)
 
-**Complete Implementation (3 files)**
+**UI & Display (1 file)**
+- [x] Display - LCD display and MIDI MESSAGE LED emulation with hardware-accurate timing (Display.cs)
+
+**ROM Management (1 file)**
+- [x] ROMInfo - ROM identification, pairing, and machine configuration (ROMInfo.cs)
+
+**Complete Implementation (5 files)**
 - [x] Partial.cs - **COMPLETE** with all methods: StartPartial, ProduceOutput (int/float), audio generation pipeline, ring modulation, panning
 - [x] MemoryRegion.cs - Complete with Read/Write operations
+- [x] Display.cs - **COMPLETE** LCD display emulation with hardware-accurate mode switching and timing
+- [x] ROMInfo.cs - **COMPLETE** ROM identification with SHA1 hashing, ROM pairing/merging, machine configurations
 - [x] Synth.cs - Stub methods and infrastructure, needs core implementation
 
-### 🚧 Remaining Work (~110KB C++)
+### 🚧 Remaining Work (~73KB C++)
 - [ ] Complete Synth implementation (~92KB, most complex) - Main synthesizer coordination
 - [ ] BReverbModel (~28KB) - Boss reverb emulation
 - [ ] Analog (~19KB) - Analog circuit emulation
-- [ ] Display (~17KB) - LCD display emulation
-- [ ] ROMInfo (~20KB) - ROM identification and loading
 
 ### Modern .NET Features Incorporated
 
