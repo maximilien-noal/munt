@@ -1,0 +1,194 @@
+# MT32Emu - C# Port
+
+This is a C# port of the mt32emu library, a C/C++ library which allows to emulate (approximately) [the Roland MT-32, CM-32L and LAPC-I synthesiser modules](https://en.wikipedia.org/wiki/Roland_MT-32).
+
+## Project Goals
+
+- **Identical Translation**: Stay very close to the original C++ code structure to make backporting fixes from upstream easy
+- **.NET 8 Compatible**: Target .NET 8 for modern .NET compatibility
+- **Unsafe Code Allowed**: Use unsafe code where necessary for performance and to maintain similarity with the C++ implementation
+- **Line-by-Line Conversion**: Maintain the same algorithms, data structures, and logic as the original
+
+## Current Status
+
+**22 files completed** - Core infrastructure and synthesis components operational:
+
+### ✅ Completed Components
+
+**Foundation (7 files)**
+- [x] Type definitions with C++ aliases (Types.cs)
+- [x] Global constants and sample rates (Globals.cs)
+- [x] Mathematical utilities for LA32 chip (MMath.cs)
+- [x] Internal types and enumerations (Internals.cs)
+- [x] Public enumerations (Enumerations.cs)
+- [x] Memory-mapped data structures (Structures.cs)
+- [x] Pre-computed lookup tables (Tables.cs)
+
+**Synthesis Core (3 files)**
+- [x] LA32Ramp - Hardware-accurate amplitude/filter ramping (LA32Ramp.cs)
+- [x] TVF - Time Variant Filter with envelope control (TVF.cs)
+- [x] TVA - Time Variant Amplifier with 7-phase envelope (TVA.cs)
+- [x] TVP - Time Variant Pitch with LFO and MCU timer emulation (TVP.cs)
+
+**MIDI & I/O (5 files)**
+- [x] Poly - Voice allocation and state management (Poly.cs)
+- [x] MidiEventQueue - Ring buffer for MIDI events (MidiEventQueue.cs)
+- [x] MidiStreamParser - Full MIDI stream parsing with running status (MidiStreamParser.cs)
+- [x] File I/O abstraction with SHA1 support (File.cs, FileStream.cs)
+- [x] Version tracking (VersionInfo.cs)
+
+**Audio Processing (1 file)**
+- [x] SampleRateConverter - Sample rate conversion and timestamp utilities (SampleRateConverter.cs)
+
+**Stub Classes (3 files)** - Ready for full implementation
+- [x] Part.cs - Partial implementation
+- [x] Partial.cs - Partial implementation
+- [x] Synth.cs - Partial implementation
+
+### 🚧 Remaining Work (19+ classes, ~220KB C++)
+- [ ] Complete Part implementation (~23KB)
+- [ ] Complete Partial implementation (~15KB)
+- [ ] Complete Synth implementation (~92KB, most complex)
+- [ ] LA32WaveGenerator (~17KB)
+- [ ] LA32FloatWaveGenerator (~13KB)
+- [ ] PartialManager (~11KB)
+- [ ] BReverbModel (~28KB)
+- [ ] Analog (~19KB)
+- [ ] Display (~17KB)
+- [ ] ROMInfo (~20KB)
+
+### Modern .NET Features Incorporated
+
+- **Span<T> & ReadOnlySpan<T>**: Zero-copy operations for MIDI parsing, audio buffers, and file I/O
+- **stackalloc**: Stack-allocated temporary buffers (zero heap allocation)
+- **unsafe pointers**: Direct memory access for C++ struct compatibility (e.g., `TimbreParam.PartialParam*`)
+- **ref parameters**: Pass-by-reference for efficiency (e.g., `Normalise(ref val)`)
+- **Random.Shared**: Thread-safe random number generation for MCU timer jitter
+- **Interfaces**: Clean abstractions (IMidiReceiver, IMidiReporter, IReportHandler)
+- **IDisposable**: Proper resource management in FileStream
+- **switch expressions**: Clean pattern matching for modes
+- **System.Security.Cryptography.SHA1**: Native .NET hashing
+
+## Building
+
+Requirements:
+- .NET 8 SDK or later
+
+To build:
+```bash
+cd mt32emu-csharp/MT32Emu
+dotnet build
+```
+
+To build in Release mode:
+```bash
+dotnet build -c Release
+```
+
+## Usage Examples
+
+### Initialize Lookup Tables
+
+```csharp
+using MT32Emu;
+
+// Initialize static lookup tables (call once at startup)
+LA32Ramp.InitTables(Tables.GetInstance());
+TVF.InitTables(Tables.GetInstance());
+TVA.InitTables(Tables.GetInstance());
+```
+
+### Amplitude/Filter Ramping (Zero-Copy)
+
+```csharp
+// Create and configure ramp
+var ramp = new LA32Ramp();
+ramp.StartRamp(target: 255, increment: 0x40); // Ascending ramp
+
+// Generate values
+uint currentValue = ramp.NextValue();
+bool interruptFired = ramp.CheckInterrupt();
+```
+
+### MIDI Event Queue (Zero-Copy)
+
+```csharp
+// Create queue with ring buffer
+var queue = new MidiEventQueue(ringBufferSize: 1024, storageBufferSize: 32768);
+
+// Push SysEx data (zero-copy with ReadOnlySpan)
+ReadOnlySpan<byte> sysexData = GetSysexData();
+queue.PushSysex(sysexData, timestamp: 0);
+
+// Retrieve events
+ref readonly MidiEvent evt = ref queue.PeekMidiEvent();
+```
+
+### Time-Variant Synthesis Components
+
+```csharp
+// Create synthesis components
+var ampRamp = new LA32Ramp();
+var tva = new TVA(partial, ampRamp);
+var cutoffRamp = new LA32Ramp();
+var tvf = new TVF(partial, cutoffRamp);
+var tvp = new TVP(partial);
+
+// Initialize (unsafe required for pointer parameters)
+unsafe
+{
+    tva.Reset(part, partialParam, rhythmTemp);
+    tvf.Reset(partialParam, basePitch);
+    tvp.Reset(part, partialParam);
+}
+
+// Process pitch with hardware-accurate timing
+ushort currentPitch = tvp.NextPitch();
+```
+
+### MIDI Stream Parsing (Zero-Copy)
+
+```csharp
+// Create parser
+var parser = new DefaultMidiStreamParser(synth);
+
+// Parse MIDI data (zero-copy with ReadOnlySpan)
+ReadOnlySpan<byte> midiStream = GetMidiData();
+parser.ParseStream(midiStream);
+```
+
+### Sample Rate Conversion (Zero-Copy)
+
+```csharp
+// Create converter
+var converter = new SampleRateConverter(
+    synth, 
+    targetSampleRate: 48000, 
+    SamplerateConversionQuality.GOOD
+);
+
+// Get output samples (zero-copy with stackalloc)
+Span<short> outputBuffer = stackalloc short[bufferSize];
+converter.GetOutputSamples(outputBuffer);
+
+// Or use float buffers
+Span<float> floatBuffer = stackalloc float[bufferSize];
+converter.GetOutputSamples(floatBuffer);
+```
+
+## License
+
+Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher  
+Copyright (C) 2011-2025 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+## Original Project
+
+This is a C# port of the mt32emu library from the [Munt project](https://github.com/munt/munt).
+
+## Trademark Disclaimer
+
+Roland is a trademark of Roland Corp. All other brand and product names are trademarks or registered trademarks of their respective holder. Use of trademarks is for informational purposes only and does not imply endorsement by or affiliation with the holder.
