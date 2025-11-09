@@ -21,6 +21,7 @@ namespace MT32Emu;
 public class Synth
 {
     public Poly? abortingPoly;
+    public ControlROMFeatureSet controlROMFeatures;
 
     public void PrintDebug(string message)
     {

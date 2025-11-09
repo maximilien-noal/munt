@@ -44,4 +44,14 @@ public class Partial
     {
         throw new NotImplementedException("Partial class needs full implementation");
     }
+
+    public Poly GetPoly()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
+
+    public Synth GetSynth()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
 }
