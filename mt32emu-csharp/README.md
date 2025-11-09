@@ -11,7 +11,7 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 
 ## Current Status
 
-**22 files completed** - Core infrastructure and synthesis components operational:
+**27 files completed** - Core infrastructure and synthesis components operational:
 
 ### ✅ Completed Components
 
@@ -24,38 +24,40 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 - [x] Memory-mapped data structures (Structures.cs)
 - [x] Pre-computed lookup tables (Tables.cs)
 
-**Synthesis Core (3 files)**
+**Synthesis Core (7 files)**
 - [x] LA32Ramp - Hardware-accurate amplitude/filter ramping (LA32Ramp.cs)
+- [x] LA32WaveGenerator - Log-space wave generation with pulse/saw/resonance (LA32WaveGenerator.cs)
+- [x] LA32FloatWaveGenerator - Float-based wave generation variant (LA32FloatWaveGenerator.cs)
 - [x] TVF - Time Variant Filter with envelope control (TVF.cs)
 - [x] TVA - Time Variant Amplifier with 7-phase envelope (TVA.cs)
 - [x] TVP - Time Variant Pitch with LFO and MCU timer emulation (TVP.cs)
 
-**MIDI & I/O (5 files)**
+**Voice Management (4 files)**
 - [x] Poly - Voice allocation and state management (Poly.cs)
+- [x] Part - MIDI part with patch/timbre management (Part.cs)
+- [x] PartialManager - Partial allocation and resource management (PartialManager.cs)
+- [x] MemoryRegion - Sysex-addressable memory abstraction (MemoryRegion.cs)
+
+**MIDI & I/O (5 files)**
 - [x] MidiEventQueue - Ring buffer for MIDI events (MidiEventQueue.cs)
 - [x] MidiStreamParser - Full MIDI stream parsing with running status (MidiStreamParser.cs)
 - [x] File I/O abstraction with SHA1 support (File.cs, FileStream.cs)
-- [x] Version tracking (VersionInfo.cs)
+- [x] Version tracking (VersionInfo.cs, VersionTagging.cs)
 
 **Audio Processing (1 file)**
 - [x] SampleRateConverter - Sample rate conversion and timestamp utilities (SampleRateConverter.cs)
 
-**Stub Classes (3 files)** - Ready for full implementation
-- [x] Part.cs - Partial implementation
-- [x] Partial.cs - Partial implementation
-- [x] Synth.cs - Partial implementation
+**Stub Classes (2 files)** - Ready for full implementation
+- [x] Partial.cs - Basic structure, needs StartPartial and audio generation
+- [x] Synth.cs - Stub methods, needs full implementation
 
-### 🚧 Remaining Work (19+ classes, ~220KB C++)
-- [ ] Complete Part implementation (~23KB)
-- [ ] Complete Partial implementation (~15KB)
-- [ ] Complete Synth implementation (~92KB, most complex)
-- [ ] LA32WaveGenerator (~17KB)
-- [ ] LA32FloatWaveGenerator (~13KB)
-- [ ] PartialManager (~11KB)
-- [ ] BReverbModel (~28KB)
-- [ ] Analog (~19KB)
-- [ ] Display (~17KB)
-- [ ] ROMInfo (~20KB)
+### 🚧 Remaining Work (~150KB C++)
+- [ ] Complete Partial implementation (~15KB) - Wave generation coordination, TVA/TVF/TVP integration
+- [ ] Complete Synth implementation (~92KB, most complex) - Main synthesizer coordination
+- [ ] BReverbModel (~28KB) - Boss reverb emulation
+- [ ] Analog (~19KB) - Analog circuit emulation
+- [ ] Display (~17KB) - LCD display emulation
+- [ ] ROMInfo (~20KB) - ROM identification and loading
 
 ### Modern .NET Features Incorporated
 
