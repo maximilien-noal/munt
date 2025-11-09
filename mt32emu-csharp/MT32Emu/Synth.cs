@@ -214,7 +214,7 @@ public class Synth
         throw new NotImplementedException("Synth class needs full implementation");
     }
 
-    public unsafe byte* GetPCMROMData(uint addr)
+    public unsafe Bit16s* GetPCMROMData(uint addr)
     {
         throw new NotImplementedException("Synth class needs full implementation");
     }

@@ -161,14 +161,17 @@ public class Poly
         return true;
     }
 
-    public void BackupCacheToPartials(Span<PatchCache> cache)
+    public unsafe void BackupCacheToPartials(Span<PatchCache> cache)
     {
-        for (int partialNum = 0; partialNum < 4; partialNum++)
+        fixed (PatchCache* cachePtr = cache)
         {
-            Partial? partial = partials[partialNum];
-            if (partial != null)
+            for (int partialNum = 0; partialNum < 4; partialNum++)
             {
-                partial.BackupCache(cache[partialNum]);
+                Partial? partial = partials[partialNum];
+                if (partial != null)
+                {
+                    partial.BackupCache(cachePtr + partialNum);
+                }
             }
         }
     }
