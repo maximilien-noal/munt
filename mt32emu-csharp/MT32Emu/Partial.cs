@@ -19,66 +19,108 @@ namespace MT32Emu;
 
 using Bit16s = System.Int16;
 
+using Bit32u = System.UInt32;
+using IntSample = System.Int16;
+using FloatSample = System.Single;
+
 // Stub class - to be implemented
 public class Partial
 {
+    private readonly Synth synth;
+    private readonly int partialIndex;
+    private int ownerPart = -1;
+
+    public bool AlreadyOutputed { get; set; }
+
+    public Partial(Synth useSynth, int usePartialIndex)
+    {
+        synth = useSynth;
+        partialIndex = usePartialIndex;
+        AlreadyOutputed = false;
+    }
+
+    public void Activate(int partNum)
+    {
+        ownerPart = partNum;
+    }
+
     public bool IsActive()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        return ownerPart >= 0;
+    }
+
+    public int GetOwnerPart()
+    {
+        return ownerPart;
     }
 
     public void Deactivate()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        ownerPart = -1;
     }
 
     public void StartDecayAll()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        // Stub - to be implemented
     }
 
     public void StartAbort()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        // Stub - to be implemented
     }
 
     public void BackupCache(PatchCache cache)
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        // Stub - to be implemented
     }
 
     public Poly GetPoly()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        throw new NotImplementedException("Partial.GetPoly() needs full implementation");
     }
 
     public Synth GetSynth()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        return synth;
     }
 
     public bool IsRingModulatingNoMix()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        return false; // Stub
     }
 
     public bool IsRingModulatingSlave()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        return false; // Stub
     }
 
     public unsafe ControlROMPCMStruct* GetControlROMPCMStruct()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        throw new NotImplementedException("Partial.GetControlROMPCMStruct() needs full implementation");
     }
 
     public bool IsPCM()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        return false; // Stub
     }
 
     public TVA GetTVA()
     {
-        throw new NotImplementedException("Partial class needs full implementation");
+        throw new NotImplementedException("Partial.GetTVA() needs full implementation");
+    }
+
+    public bool ShouldReverb()
+    {
+        return false; // Stub
+    }
+
+    public bool ProduceOutput(IntSample[] leftBuf, IntSample[] rightBuf, Bit32u bufferLength)
+    {
+        return false; // Stub
+    }
+
+    public bool ProduceOutput(FloatSample[] leftBuf, FloatSample[] rightBuf, Bit32u bufferLength)
+    {
+        return false; // Stub
     }
 }

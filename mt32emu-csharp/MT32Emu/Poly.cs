@@ -54,7 +54,7 @@ public class Poly
         next = null;
     }
 
-    public void SetPart(Part usePart)
+    public void SetPart(Part? usePart)
     {
         part = usePart;
     }
