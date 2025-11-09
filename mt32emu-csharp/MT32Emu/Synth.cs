@@ -242,4 +242,11 @@ public unsafe class Synth
         if (sampleEx < -32768) return -32768;
         return (Bit16s)sampleEx;
     }
+
+    public static float ClipSampleEx(float sampleEx)
+    {
+        if (sampleEx > 1.0f) return 1.0f;
+        if (sampleEx < -1.0f) return -1.0f;
+        return sampleEx;
+    }
 }
