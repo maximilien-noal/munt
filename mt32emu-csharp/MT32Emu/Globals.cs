@@ -26,6 +26,18 @@ public static class Globals
      */
     public const uint SAMPLE_RATE = 32000;
 
+    // MT32EMU_MEMADDR() converts from sysex-padded, MT32EMU_SYSEXMEMADDR converts to it
+    // Roland provides documentation using the sysex-padded addresses, so we tend to use that in code and output
+    public static uint MT32EMU_MEMADDR(uint x)
+    {
+        return (((x & 0x7f0000) >> 2) | ((x & 0x7f00) >> 1) | (x & 0x7f));
+    }
+
+    public static uint MT32EMU_SYSEXMEMADDR(uint x)
+    {
+        return (((x & 0x1FC000) << 2) | ((x & 0x3F80) << 1) | (x & 0x7f));
+    }
+
     /* The default value for the maximum number of partials playing simultaneously. */
     public const uint DEFAULT_MAX_PARTIALS = 32;
 
