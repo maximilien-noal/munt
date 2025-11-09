@@ -30,14 +30,18 @@ public interface IReportHandler
 }
 
 // Stub class - to be implemented
-public class Synth
+public unsafe class Synth
 {
     public Poly? abortingPoly;
     public ControlROMFeatureSet controlROMFeatures;
-    public ControlROMMap controlROMMap;
+    public ControlROMMap* controlROMMap;
+    public Bit8u[] controlROMData = new Bit8u[Globals.CONTROL_ROM_SIZE];
     public IReportHandler? reportHandler;
     public PartialManager? partialManager;
+    public MemParams mt32ram;
+    public Bit32u renderedSampleCount;
     private Bit32u partialCount = Globals.DEFAULT_MAX_PARTIALS;
+    private Part?[] parts = new Part?[9];
 
     public void PrintDebug(string message)
     {
@@ -54,9 +58,22 @@ public class Synth
         return partialCount;
     }
 
-    public Part GetPart(int partNum)
+    public Part? GetPart(Bit8u partNum)
     {
-        throw new NotImplementedException("Synth.GetPart() needs full implementation");
+        if (partNum > 8) return null;
+        return parts[partNum];
+    }
+    
+    public string? GetSoundGroupName(Part? part)
+    {
+        // Stub - to be fully implemented
+        return null;
+    }
+    
+    public bool IsDisplayOldMT32Compatible()
+    {
+        // Stub - to be fully implemented
+        return false;
     }
 
     public unsafe MemParams.System* GetSystemPtr()
