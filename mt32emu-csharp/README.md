@@ -47,12 +47,13 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 **Audio Processing (1 file)**
 - [x] SampleRateConverter - Sample rate conversion and timestamp utilities (SampleRateConverter.cs)
 
-**Stub Classes (2 files)** - Ready for full implementation
-- [x] Partial.cs - Basic structure, needs StartPartial and audio generation
-- [x] Synth.cs - Stub methods, needs full implementation
+**Partial Implementation (2 files)** - Infrastructure complete, core methods pending
+- [x] Partial.cs - Enhanced with 12 concrete methods (Deactivate, StartDecayAll, StartAbort, ring modulation checks, etc.)
+- [x] Synth.cs - Stub methods and infrastructure, needs core implementation
+- [x] MemoryRegion.cs - Complete with Read/Write operations
 
-### 🚧 Remaining Work (~150KB C++)
-- [ ] Complete Partial implementation (~15KB) - Wave generation coordination, TVA/TVF/TVP integration
+### 🚧 Remaining Work (~120KB C++)
+- [ ] Complete Partial implementation (~10KB remaining) - StartPartial and ProduceOutput audio generation
 - [ ] Complete Synth implementation (~92KB, most complex) - Main synthesizer coordination
 - [ ] BReverbModel (~28KB) - Boss reverb emulation
 - [ ] Analog (~19KB) - Analog circuit emulation
