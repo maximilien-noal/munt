@@ -32,4 +32,14 @@ public class Synth
     {
         return abortingPoly != null;
     }
+
+    public unsafe MemParams.System* GetSystemPtr()
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public bool IsNiceAmpRampEnabled()
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
 }

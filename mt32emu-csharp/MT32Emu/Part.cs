@@ -17,6 +17,8 @@
 
 namespace MT32Emu;
 
+using Bit8u = System.Byte;
+
 // Stub class - to be implemented
 public class Part
 {
@@ -31,6 +33,16 @@ public class Part
     }
 
     public void PartialDeactivated(Poly poly)
+    {
+        throw new NotImplementedException("Part class needs full implementation");
+    }
+
+    public Bit8u GetVolume()
+    {
+        throw new NotImplementedException("Part class needs full implementation");
+    }
+
+    public Bit8u GetExpression()
     {
         throw new NotImplementedException("Part class needs full implementation");
     }

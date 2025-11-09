@@ -54,4 +54,14 @@ public class Partial
     {
         throw new NotImplementedException("Partial class needs full implementation");
     }
+
+    public bool IsRingModulatingNoMix()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
+
+    public bool IsRingModulatingSlave()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
 }
