@@ -194,7 +194,7 @@ public class Display
             {
                 fixed (Bit8u* controlROMPtr = synth.controlROMData)
                 {
-                    Bit8u* startupMessage = controlROMPtr + synth.controlROMMap->startupMessage;
+                    Bit8u* startupMessage = controlROMPtr + synth.controlROMMap.startupMessage;
                     new Span<Bit8u>(startupMessage, (int)LCD_TEXT_SIZE).CopyTo(displayBuffer);
                 }
             }
@@ -248,7 +248,7 @@ public class Display
                         {
                             fixed (Bit8u* controlROMPtr = synth.controlROMData)
                             {
-                                Bit8u* sysexErrorMessage = controlROMPtr + synth.controlROMMap->sysexErrorMessage;
+                                Bit8u* sysexErrorMessage = controlROMPtr + synth.controlROMMap.sysexErrorMessage;
                                 new Span<Bit8u>(sysexErrorMessage, (int)LCD_TEXT_SIZE).CopyTo(displayBuffer);
                             }
                         }

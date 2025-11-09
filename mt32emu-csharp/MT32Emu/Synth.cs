@@ -34,7 +34,7 @@ public unsafe class Synth
 {
     public Poly? abortingPoly;
     public ControlROMFeatureSet controlROMFeatures;
-    public ControlROMMap* controlROMMap;
+    public ControlROMMap controlROMMap;
     public Bit8u[] controlROMData = new Bit8u[Globals.CONTROL_ROM_SIZE];
     public IReportHandler? reportHandler;
     public PartialManager? partialManager;
