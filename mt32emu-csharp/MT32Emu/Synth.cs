@@ -29,6 +29,17 @@ public interface IReportHandler
     void OnPolyStateChanged(Bit8u partNum);
 }
 
+// Set of multiplexed output streams at the DAC entrance
+public unsafe struct DACOutputStreams<T> where T : unmanaged
+{
+    public T* nonReverbLeft;
+    public T* nonReverbRight;
+    public T* reverbDryLeft;
+    public T* reverbDryRight;
+    public T* reverbWetLeft;
+    public T* reverbWetRight;
+}
+
 // Synth class - main synthesizer coordinator
 // NOTE: This is a partial implementation with core synthesis components complete.
 // Many high-level coordination methods are stubs that delegate to complete synthesis classes.
@@ -106,44 +117,6 @@ public unsafe class Synth
     public bool IsAbortingPoly()
     {
         return abortingPoly != null;
-    }
-
-    public Bit32u GetPartialCount()
-    {
-        return partialCount;
-    }
-
-    public Part? GetPart(Bit8u partNum)
-    {
-        if (partNum > 8) return null;
-        return parts[partNum];
-    }
-    
-    public string? GetSoundGroupName(Part? part)
-    {
-        if (part == null) return null;
-        
-        // For rhythm parts (RhythmPart class), return a default name
-        if (part is RhythmPart)
-        {
-            return "RHYTHM";
-        }
-        
-        // For regular parts, look up the sound group
-        // This is simplified - full implementation would need proper patch/timbre resolution
-        uint absTimbreNum = part.GetAbsTimbreNum();
-        if (absTimbreNum >= soundGroupIx.Length)
-        {
-            return null;
-        }
-        
-        Bit8u soundGroupIndex = soundGroupIx[absTimbreNum];
-        if (soundGroupIndex >= soundGroupNames.Length)
-        {
-            return null;
-        }
-        
-        return soundGroupNames[soundGroupIndex];
     }
     
     public bool IsDisplayOldMT32Compatible()
@@ -340,28 +313,6 @@ public unsafe class Synth
     {
         // Notification that a voice part state has changed
         // Can trigger callbacks in extended implementations
-    }
-
-    public RendererType GetSelectedRendererType()
-    {
-        // Return the currently selected renderer type
-        // Default to 16-bit signed integer rendering
-        return RendererType.RendererType_BIT16S;
-    }
-
-    public bool IsNicePanningEnabled()
-    {
-        return nicePanningEnabled;
-    }
-
-    public bool IsNicePartialMixingEnabled()
-    {
-        return nicePartialMixingEnabled;
-    }
-
-    public bool ReversedStereoEnabled()
-    {
-        return reversedStereoEnabled;
     }
 
     public unsafe PCMWaveEntry* GetPCMWave(int pcmNum)
@@ -738,5 +689,323 @@ public unsafe class Synth
             checksum = (Bit8u)((checksum + data[(int)i]) & 0x7F);
         }
         return (Bit8u)((128 - checksum) & 0x7F);
+    }
+    
+    // ========== MIDI Queue Management ==========
+    
+    /// <summary>
+    /// Flushes the MIDI event queue, processing all pending events immediately.
+    /// </summary>
+    public void FlushMIDIQueue()
+    {
+        if (midiQueue == null || !opened)
+        {
+            return;
+        }
+        
+        // TODO: Process all pending MIDI events in the queue
+        // This would involve dequeuing events and processing them through the synthesis pipeline
+    }
+    
+    /// <summary>
+    /// Sets the size of the internal MIDI event queue.
+    /// The queue size is set to the minimum power of 2 that is greater than or equal to the requested size.
+    /// </summary>
+    /// <param name="requestedSize">Requested queue size</param>
+    /// <returns>The actual queue size being used</returns>
+    public Bit32u SetMIDIEventQueueSize(Bit32u requestedSize)
+    {
+        if (!opened)
+        {
+            return 0;
+        }
+        
+        FlushMIDIQueue();
+        
+        // Calculate next power of 2
+        Bit32u size = 1;
+        while (size < requestedSize)
+        {
+            size <<= 1;
+        }
+        
+        // Recreate MIDI queue with new size
+        midiQueue = new MidiEventQueue(size, 32768);
+        
+        return size;
+    }
+    
+    /// <summary>
+    /// Configures the SysEx storage of the internal MIDI event queue.
+    /// </summary>
+    /// <param name="storageBufferSize">Size of the storage buffer (0 for dynamic allocation)</param>
+    public void ConfigureMIDIEventQueueSysexStorage(Bit32u storageBufferSize)
+    {
+        if (!opened)
+        {
+            return;
+        }
+        
+        FlushMIDIQueue();
+        
+        // Recreate MIDI queue with new storage configuration
+        // Use default queue size if queue doesn't exist
+        Bit32u queueSize = 1024;
+        midiQueue = new MidiEventQueue(queueSize, storageBufferSize);
+    }
+    
+    /// <summary>
+    /// Gets the number of rendered samples.
+    /// </summary>
+    public Bit32u GetInternalRenderedSampleCount()
+    {
+        return renderedSampleCount;
+    }
+    
+    // ========== Query Methods ==========
+    
+    /// <summary>
+    /// Returns true if the synth has any active partials.
+    /// </summary>
+    public bool HasActivePartials()
+    {
+        // TODO: Check if any partials are active
+        // This would involve checking all partials in the partial manager
+        return false;
+    }
+    
+    /// <summary>
+    /// Returns true if the synth is actively producing sound.
+    /// </summary>
+    public bool IsActive()
+    {
+        return activated && HasActivePartials();
+    }
+    
+    /// <summary>
+    /// Gets the partial count.
+    /// </summary>
+    public Bit32u GetPartialCount()
+    {
+        return partialCount;
+    }
+    
+    /// <summary>
+    /// Gets the selected renderer type.
+    /// </summary>
+    public RendererType GetSelectedRendererType()
+    {
+        return selectedRendererType;
+    }
+    
+    public bool IsNicePanningEnabled()
+    {
+        return nicePanningEnabled;
+    }
+    
+    public bool IsNicePartialMixingEnabled()
+    {
+        return nicePartialMixingEnabled;
+    }
+    
+    public bool ReversedStereoEnabled()
+    {
+        return reversedStereoEnabled;
+    }
+    
+    /// <summary>
+    /// Selects the renderer type for audio generation.
+    /// </summary>
+    public void SelectRendererType(RendererType rendererType)
+    {
+        selectedRendererType = rendererType;
+    }
+    
+    /// <summary>
+    /// Returns true if MT-32 reverb compatibility mode is the default.
+    /// </summary>
+    public bool IsDefaultReverbMT32Compatible()
+    {
+        return controlROMFeatures.defaultReverbMT32Compatible;
+    }
+    
+    /// <summary>
+    /// Returns true if the synth is in MT-32 reverb compatibility mode.
+    /// </summary>
+    public bool IsMT32ReverbCompatibilityMode()
+    {
+        // TODO: Track actual reverb compatibility mode (may differ from default)
+        return controlROMFeatures.defaultReverbMT32Compatible;
+    }
+    
+    /// <summary>
+    /// Returns true if old MT-32 display features are enabled.
+    /// </summary>
+    public bool IsDefaultDisplayOldMT32Compatible()
+    {
+        return controlROMFeatures.oldMT32DisplayFeatures;
+    }
+    
+    /// <summary>
+    /// Gets a pointer to a part.
+    /// </summary>
+    /// <param name="partNum">Part number (0-7 for parts 1-8, 8 for rhythm)</param>
+    /// <returns>The part, or null if invalid</returns>
+    public Part? GetPart(Bit8u partNum)
+    {
+        if (partNum > 8)
+        {
+            return null;
+        }
+        return parts[partNum];
+    }
+    
+    /// <summary>
+    /// Gets the sound group name for a part.
+    /// </summary>
+    /// <param name="part">The part to query</param>
+    /// <returns>The sound group name, or null if not available</returns>
+    public string? GetSoundGroupName(Part? part)
+    {
+        if (part == null)
+        {
+            return null;
+        }
+        
+        // For rhythm parts
+        if (part is RhythmPart)
+        {
+            return "RHYTHM";
+        }
+        
+        // For regular parts, look up sound group
+        uint absTimbreNum = part.GetAbsTimbreNum();
+        if (absTimbreNum >= soundGroupIx.Length)
+        {
+            return null;
+        }
+        
+        Bit8u soundGroupIndex = soundGroupIx[absTimbreNum];
+        if (soundGroupIndex >= soundGroupNames.Length)
+        {
+            return null;
+        }
+        
+        return soundGroupNames[soundGroupIndex];
+    }
+    
+    // ========== Advanced MIDI Methods (Stubs) ==========
+    
+    /// <summary>
+    /// Plays a MIDI message immediately without queuing.
+    /// </summary>
+    /// <param name="msg">32-bit MIDI message</param>
+    public void PlayMsgNow(Bit32u msg)
+    {
+        // TODO: Implement immediate MIDI message processing
+        // Extract status, data1, data2 from msg
+        // Route to appropriate part based on channel
+    }
+    
+    /// <summary>
+    /// Plays a MIDI message on a specific part.
+    /// </summary>
+    /// <param name="partNum">Part number</param>
+    /// <param name="code">MIDI status code</param>
+    /// <param name="note">Note number</param>
+    /// <param name="velocity">Velocity</param>
+    public void PlayMsgOnPart(Bit8u partNum, Bit8u code, Bit8u note, Bit8u velocity)
+    {
+        Part? part = GetPart(partNum);
+        if (part == null || !opened)
+        {
+            return;
+        }
+        
+        // TODO: Route MIDI message to the specified part
+        // part.NoteOn(note, velocity) or part.NoteOff(note, velocity) etc.
+    }
+    
+    /// <summary>
+    /// Plays a SysEx message immediately without queuing.
+    /// </summary>
+    /// <param name="sysex">SysEx data including F0 and F7</param>
+    public void PlaySysexNow(ReadOnlySpan<Bit8u> sysex)
+    {
+        // TODO: Implement immediate SysEx processing
+        // Parse SysEx and update appropriate memory regions
+    }
+    
+    /// <summary>
+    /// Plays a SysEx message without F0/F7 framing bytes.
+    /// </summary>
+    /// <param name="sysex">SysEx data without framing</param>
+    public void PlaySysexWithoutFraming(ReadOnlySpan<Bit8u> sysex)
+    {
+        // TODO: Implement SysEx processing without frame bytes
+    }
+    
+    /// <summary>
+    /// Plays a SysEx message without device/model/command header.
+    /// </summary>
+    /// <param name="device">Device ID</param>
+    /// <param name="command">Command byte</param>
+    /// <param name="sysex">SysEx data</param>
+    public void PlaySysexWithoutHeader(Bit8u device, Bit8u command, ReadOnlySpan<Bit8u> sysex)
+    {
+        // TODO: Implement SysEx processing without header
+    }
+    
+    /// <summary>
+    /// Writes SysEx data directly to memory regions.
+    /// </summary>
+    /// <param name="channel">MIDI channel</param>
+    /// <param name="sysex">SysEx data</param>
+    public void WriteSysex(Bit8u channel, ReadOnlySpan<Bit8u> sysex)
+    {
+        // TODO: Implement direct SysEx writing to memory regions
+    }
+    
+    /// <summary>
+    /// Reads memory from the synthesizer.
+    /// </summary>
+    /// <param name="addr">Memory address</param>
+    /// <param name="len">Length to read</param>
+    /// <param name="data">Buffer to receive data</param>
+    public void ReadMemory(Bit32u addr, Bit32u len, Span<Bit8u> data)
+    {
+        // TODO: Implement memory reading through memory regions
+    }
+    
+    // ========== Render Methods (Stubs) ==========
+    
+    /// <summary>
+    /// Renders audio samples to separate DAC output streams.
+    /// This is an advanced method for accessing individual pre-analog streams.
+    /// </summary>
+    /// <param name="streams">DAC output stream buffers</param>
+    /// <param name="len">Number of sample pairs to render</param>
+    public void RenderStreams(DACOutputStreams<Bit16s> streams, Bit32u len)
+    {
+        // TODO: Implement stream rendering
+        // This would involve:
+        // 1. Rendering all active partials
+        // 2. Mixing non-reverb and reverb signals separately
+        // 3. Writing to the appropriate stream buffers
+    }
+    
+    /// <summary>
+    /// Renders audio samples to separate DAC output streams (float version).
+    /// </summary>
+    public void RenderStreams(DACOutputStreams<float> streams, Bit32u len)
+    {
+        // TODO: Implement float stream rendering
+    }
+    
+    // ========== Internal Helper Methods ==========
+    
+    private void ResetMasterTunePitchDelta()
+    {
+        masterTunePitchDelta = 0;
     }
 }
