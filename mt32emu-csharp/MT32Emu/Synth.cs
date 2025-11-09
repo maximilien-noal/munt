@@ -91,4 +91,47 @@ public class Synth
     {
         throw new NotImplementedException("Synth class needs full implementation");
     }
+
+    public double GetStereoOutputSampleRate()
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public static double GetStereoOutputSampleRate(AnalogOutputMode mode)
+    {
+        // Returns the output sample rate for the given analog output mode
+        // These are based on the MT-32's internal sample rates
+        return mode switch
+        {
+            AnalogOutputMode.AnalogOutputMode_COARSE => Globals.SAMPLE_RATE,
+            AnalogOutputMode.AnalogOutputMode_ACCURATE => Globals.SAMPLE_RATE * 2,
+            AnalogOutputMode.AnalogOutputMode_OVERSAMPLED => Globals.SAMPLE_RATE * 4,
+            _ => Globals.SAMPLE_RATE
+        };
+    }
+
+    public void Render(Span<Bit16s> buffer)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public void Render(Span<float> buffer)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public static Bit16s ConvertSample(float sample)
+    {
+        // Convert a float sample [-1.0, 1.0] to 16-bit signed integer
+        const float MAX_SAMPLE_VALUE = 32767.0f;
+        int intSample = (int)(sample * MAX_SAMPLE_VALUE);
+        if (intSample > 32767) return 32767;
+        if (intSample < -32768) return -32768;
+        return (Bit16s)intSample;
+    }
+
+    public static void MuteSampleBuffer(Span<float> buffer)
+    {
+        buffer.Clear();
+    }
 }
