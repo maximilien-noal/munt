@@ -188,4 +188,41 @@ public class Synth
     {
         // Stub - to be implemented
     }
+
+    public RendererType GetSelectedRendererType()
+    {
+        return RendererType.RendererType_BIT16S; // Stub - default to 16-bit
+    }
+
+    public bool IsNicePanningEnabled()
+    {
+        return false; // Stub
+    }
+
+    public bool IsNicePartialMixingEnabled()
+    {
+        return false; // Stub
+    }
+
+    public bool ReversedStereoEnabled()
+    {
+        return false; // Stub
+    }
+
+    public unsafe PCMWaveEntry* GetPCMWave(int pcmNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe byte* GetPCMROMData(uint addr)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public static Bit16s ClipSampleEx(int sampleEx)
+    {
+        if (sampleEx > 32767) return 32767;
+        if (sampleEx < -32768) return -32768;
+        return (Bit16s)sampleEx;
+    }
 }
