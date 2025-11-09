@@ -129,6 +129,18 @@ public unsafe struct TimbreParam
 
     public CommonParam common;
     public fixed byte partialData[4 * 58]; // Array to hold 4 PartialParam structures (each is 58 bytes)
+    
+    // Helper property to access partials as PartialParam array
+    public PartialParam* partial
+    {
+        get
+        {
+            fixed (byte* ptr = partialData)
+            {
+                return (PartialParam*)ptr;
+            }
+        }
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -305,4 +317,76 @@ public unsafe struct PatchCache
 
     // The following directly points into live sysex-addressable memory
     public TimbreParam.PartialParam* partialParam;
+}
+
+// Predefined ControlROMFeatureSet configurations for different MT-32 models
+public static class ControlROMFeatureSets
+{
+    // Old MT-32 (earlier revisions)
+    public static readonly ControlROMFeatureSet OLD_MT32_ELDER = new ControlROMFeatureSet
+    {
+        quirkBasePitchOverflow = true,
+        quirkPitchEnvelopeOverflow = true,
+        quirkRingModulationNoMix = true,
+        quirkTVAZeroEnvLevels = true,
+        quirkPanMult = true,
+        quirkKeyShift = true,
+        quirkTVFBaseCutoffLimit = true,
+        quirkFastPitchChanges = false,
+        quirkDisplayCustomMessagePriority = true,
+        oldMT32DisplayFeatures = true,
+        defaultReverbMT32Compatible = true,
+        oldMT32AnalogLPF = true
+    };
+
+    // Old MT-32 (later revisions)
+    public static readonly ControlROMFeatureSet OLD_MT32_LATER = new ControlROMFeatureSet
+    {
+        quirkBasePitchOverflow = true,
+        quirkPitchEnvelopeOverflow = true,
+        quirkRingModulationNoMix = true,
+        quirkTVAZeroEnvLevels = true,
+        quirkPanMult = true,
+        quirkKeyShift = true,
+        quirkTVFBaseCutoffLimit = true,
+        quirkFastPitchChanges = false,
+        quirkDisplayCustomMessagePriority = false,
+        oldMT32DisplayFeatures = true,
+        defaultReverbMT32Compatible = true,
+        oldMT32AnalogLPF = true
+    };
+
+    // New MT-32 compatible models
+    public static readonly ControlROMFeatureSet NEW_MT32_COMPATIBLE = new ControlROMFeatureSet
+    {
+        quirkBasePitchOverflow = false,
+        quirkPitchEnvelopeOverflow = false,
+        quirkRingModulationNoMix = false,
+        quirkTVAZeroEnvLevels = false,
+        quirkPanMult = false,
+        quirkKeyShift = false,
+        quirkTVFBaseCutoffLimit = false,
+        quirkFastPitchChanges = false,
+        quirkDisplayCustomMessagePriority = false,
+        oldMT32DisplayFeatures = false,
+        defaultReverbMT32Compatible = false,
+        oldMT32AnalogLPF = false
+    };
+
+    // CM-32L/CM-64/LAPC-I compatible models
+    public static readonly ControlROMFeatureSet CM32LN_COMPATIBLE = new ControlROMFeatureSet
+    {
+        quirkBasePitchOverflow = false,
+        quirkPitchEnvelopeOverflow = false,
+        quirkRingModulationNoMix = false,
+        quirkTVAZeroEnvLevels = false,
+        quirkPanMult = false,
+        quirkKeyShift = false,
+        quirkTVFBaseCutoffLimit = false,
+        quirkFastPitchChanges = true,
+        quirkDisplayCustomMessagePriority = false,
+        oldMT32DisplayFeatures = false,
+        defaultReverbMT32Compatible = false,
+        oldMT32AnalogLPF = false
+    };
 }

@@ -120,14 +120,64 @@ public unsafe class MemoryRegion
 
     public void Read(uint entry, uint off, Bit8u* dst, uint len)
     {
-        // Implementation will be added when needed
-        throw new NotImplementedException("MemoryRegion.Read() needs implementation");
+        off += entry * EntrySize;
+        // This method should never be called with out-of-bounds parameters,
+        // or on an unsupported region - seeing any of this debug output indicates a bug in the emulator
+        if (off > EntrySize * Entries - 1)
+        {
+            return;
+        }
+        if (off + len > EntrySize * Entries)
+        {
+            len = EntrySize * Entries - off;
+        }
+        Bit8u* src = GetRealMemory();
+        if (src == null)
+        {
+            return;
+        }
+        
+        // Copy memory
+        for (uint i = 0; i < len; i++)
+        {
+            dst[i] = src[off + i];
+        }
     }
 
     public void Write(uint entry, uint off, Bit8u* src, uint len, bool init = false)
     {
-        // Implementation will be added when needed
-        throw new NotImplementedException("MemoryRegion.Write() needs implementation");
+        uint memOff = entry * EntrySize + off;
+        // This method should never be called with out-of-bounds parameters,
+        // or on an unsupported region - seeing any of this debug output indicates a bug in the emulator
+        if (off > EntrySize * Entries - 1)
+        {
+            return;
+        }
+        if (off + len > EntrySize * Entries)
+        {
+            len = EntrySize * Entries - off;
+        }
+        Bit8u* dest = GetRealMemory();
+        if (dest == null)
+        {
+            return;
+        }
+
+        for (uint i = 0; i < len; i++)
+        {
+            Bit8u desiredValue = src[i];
+            Bit8u maxValue = GetMaxValue((int)memOff);
+            // maxValue == 0 means write-protected unless called from initialisation code, in which case it really means the maximum value is 0.
+            if (maxValue != 0 || init)
+            {
+                if (desiredValue > maxValue)
+                {
+                    desiredValue = maxValue;
+                }
+                dest[memOff] = desiredValue;
+            }
+            memOff++;
+        }
     }
 }
 

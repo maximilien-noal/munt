@@ -26,6 +26,7 @@ public interface IReportHandler
 {
     bool OnMIDIQueueOverflow();
     void OnMIDISystemRealtime(Bit8u realtime);
+    void OnPolyStateChanged(Bit8u partNum);
 }
 
 // Stub class - to be implemented
@@ -33,7 +34,9 @@ public class Synth
 {
     public Poly? abortingPoly;
     public ControlROMFeatureSet controlROMFeatures;
+    public ControlROMMap controlROMMap;
     public IReportHandler? reportHandler;
+    public PartialManager? partialManager;
     private Bit32u partialCount = Globals.DEFAULT_MAX_PARTIALS;
 
     public void PrintDebug(string message)
@@ -144,5 +147,82 @@ public class Synth
     public static void MuteSampleBuffer(Span<float> buffer)
     {
         buffer.Clear();
+    }
+
+    public unsafe MemParams.PatchTemp* GetPatchTempPtr(uint partNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe TimbreParam* GetTimbreTempPtr(uint partNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe MemParams.RhythmTemp* GetRhythmTempPtr(uint drumNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe PatchParam* GetPatchPtr(uint patchNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe TimbreParam* GetTimbrePtr(uint timbreNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public void NewTimbreSet(uint partNum)
+    {
+        // Stub - to be implemented
+    }
+
+    public void RhythmNotePlayed()
+    {
+        // Stub - to be implemented
+    }
+
+    public void VoicePartStateChanged(uint partNum, bool activated)
+    {
+        // Stub - to be implemented
+    }
+
+    public RendererType GetSelectedRendererType()
+    {
+        return RendererType.RendererType_BIT16S; // Stub - default to 16-bit
+    }
+
+    public bool IsNicePanningEnabled()
+    {
+        return false; // Stub
+    }
+
+    public bool IsNicePartialMixingEnabled()
+    {
+        return false; // Stub
+    }
+
+    public bool ReversedStereoEnabled()
+    {
+        return false; // Stub
+    }
+
+    public unsafe PCMWaveEntry* GetPCMWave(int pcmNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe byte* GetPCMROMData(uint addr)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public static Bit16s ClipSampleEx(int sampleEx)
+    {
+        if (sampleEx > 32767) return 32767;
+        if (sampleEx < -32768) return -32768;
+        return (Bit16s)sampleEx;
     }
 }

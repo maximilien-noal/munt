@@ -23,12 +23,25 @@ using Bit32u = System.UInt32;
 using IntSample = System.Int16;
 using FloatSample = System.Single;
 
-// Stub class - to be implemented
+// A partial represents one of up to four waveform generators currently playing within a poly.
 public class Partial
 {
     private readonly Synth synth;
     private readonly int partialIndex;
     private int ownerPart = -1;
+    private int mixType;
+    private int structurePosition; // 0 or 1 of a structure pair
+    
+    private Poly? poly;
+    private Partial? pair;
+    
+    private TVA? tva;
+    private TVP? tvp;
+    private TVF? tvf;
+    
+    private unsafe PatchCache* patchCache;
+    private PatchCache cachebackup;
+    private bool usingBackupCache;
 
     public bool AlreadyOutputed { get; set; }
 
@@ -37,6 +50,14 @@ public class Partial
         synth = useSynth;
         partialIndex = usePartialIndex;
         AlreadyOutputed = false;
+        ownerPart = -1;
+        poly = null;
+        pair = null;
+    }
+
+    public int DebugGetPartialNum()
+    {
+        return partialIndex;
     }
 
     public void Activate(int partNum)
@@ -46,7 +67,7 @@ public class Partial
 
     public bool IsActive()
     {
-        return ownerPart >= 0;
+        return ownerPart > -1;
     }
 
     public int GetOwnerPart()
@@ -56,27 +77,57 @@ public class Partial
 
     public void Deactivate()
     {
+        if (!IsActive())
+        {
+            return;
+        }
         ownerPart = -1;
+        synth.partialManager?.PartialDeactivated(partialIndex);
+        if (poly != null)
+        {
+            poly.PartialDeactivated(this);
+        }
     }
 
     public void StartDecayAll()
     {
-        // Stub - to be implemented
+        tva?.StartDecay();
+        tvp?.StartDecay();
+        tvf?.StartDecay();
     }
 
     public void StartAbort()
     {
-        // Stub - to be implemented
+        // This is called when the partial manager needs to terminate partials for re-use by a new Poly.
+        tva?.StartAbort();
     }
 
-    public void BackupCache(PatchCache cache)
+    public unsafe void BackupCache(PatchCache cache)
     {
-        // Stub - to be implemented
+        // If we're currently using this cache, make a backup copy
+        // This is simplified - full implementation would check pointer equality
+        // For now, we just make a backup if we have a cache set
+        if (patchCache != null && !usingBackupCache)
+        {
+            cachebackup = cache;
+            usingBackupCache = true;
+        }
+    }
+    
+    private bool HasRingModulatingSlave()
+    {
+        return pair != null && structurePosition == 0 && (mixType == 1 || mixType == 2);
     }
 
-    public Poly GetPoly()
+    public unsafe void StartPartial(Part usePart, Poly usePoly, PatchCache cache, MemParams.RhythmTemp* rhythmTemp, Partial? pairPartial)
     {
-        throw new NotImplementedException("Partial.GetPoly() needs full implementation");
+        // Stub - to be implemented
+        throw new NotImplementedException("Partial.StartPartial() needs full implementation");
+    }
+
+    public Poly? GetPoly()
+    {
+        return poly;
     }
 
     public Synth GetSynth()
@@ -86,12 +137,12 @@ public class Partial
 
     public bool IsRingModulatingNoMix()
     {
-        return false; // Stub
+        return pair != null && ((structurePosition == 1 && mixType == 1) || mixType == 2);
     }
 
     public bool IsRingModulatingSlave()
     {
-        return false; // Stub
+        return pair != null && structurePosition == 1 && (mixType == 1 || mixType == 2);
     }
 
     public unsafe ControlROMPCMStruct* GetControlROMPCMStruct()
@@ -101,17 +152,25 @@ public class Partial
 
     public bool IsPCM()
     {
-        return false; // Stub
+        // Will be implemented when pcmWave field is added in full implementation
+        return false;
     }
 
-    public TVA GetTVA()
+    public TVA? GetTVA()
     {
-        throw new NotImplementedException("Partial.GetTVA() needs full implementation");
+        return tva;
     }
 
     public bool ShouldReverb()
     {
-        return false; // Stub
+        if (!IsActive())
+        {
+            return false;
+        }
+        unsafe
+        {
+            return patchCache != null && patchCache->reverb;
+        }
     }
 
     public bool ProduceOutput(IntSample[] leftBuf, IntSample[] rightBuf, Bit32u bufferLength)
