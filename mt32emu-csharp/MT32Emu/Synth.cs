@@ -26,6 +26,7 @@ public interface IReportHandler
 {
     bool OnMIDIQueueOverflow();
     void OnMIDISystemRealtime(Bit8u realtime);
+    void OnPolyStateChanged(Bit8u partNum);
 }
 
 // Stub class - to be implemented
@@ -33,7 +34,9 @@ public class Synth
 {
     public Poly? abortingPoly;
     public ControlROMFeatureSet controlROMFeatures;
+    public ControlROMMap controlROMMap;
     public IReportHandler? reportHandler;
+    public PartialManager? partialManager;
     private Bit32u partialCount = Globals.DEFAULT_MAX_PARTIALS;
 
     public void PrintDebug(string message)
@@ -144,5 +147,45 @@ public class Synth
     public static void MuteSampleBuffer(Span<float> buffer)
     {
         buffer.Clear();
+    }
+
+    public unsafe MemParams.PatchTemp* GetPatchTempPtr(uint partNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe TimbreParam* GetTimbreTempPtr(uint partNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe MemParams.RhythmTemp* GetRhythmTempPtr(uint drumNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe PatchParam* GetPatchPtr(uint patchNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public unsafe TimbreParam* GetTimbrePtr(uint timbreNum)
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public void NewTimbreSet(uint partNum)
+    {
+        // Stub - to be implemented
+    }
+
+    public void RhythmNotePlayed()
+    {
+        // Stub - to be implemented
+    }
+
+    public void VoicePartStateChanged(uint partNum, bool activated)
+    {
+        // Stub - to be implemented
     }
 }

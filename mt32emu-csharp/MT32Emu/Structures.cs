@@ -129,6 +129,18 @@ public unsafe struct TimbreParam
 
     public CommonParam common;
     public fixed byte partialData[4 * 58]; // Array to hold 4 PartialParam structures (each is 58 bytes)
+    
+    // Helper property to access partials as PartialParam array
+    public PartialParam* partial
+    {
+        get
+        {
+            fixed (byte* ptr = partialData)
+            {
+                return (PartialParam*)ptr;
+            }
+        }
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

@@ -74,6 +74,12 @@ public class Partial
         // Stub - to be implemented
     }
 
+    public unsafe void StartPartial(Part usePart, Poly usePoly, PatchCache cache, MemParams.RhythmTemp* rhythmTemp, Partial? pairPartial)
+    {
+        // Stub - to be implemented
+        throw new NotImplementedException("Partial.StartPartial() needs full implementation");
+    }
+
     public Poly GetPoly()
     {
         throw new NotImplementedException("Partial.GetPoly() needs full implementation");
