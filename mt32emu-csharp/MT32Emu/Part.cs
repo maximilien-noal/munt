@@ -657,11 +657,17 @@ public class Part
         }
         poly.Reset(key, velocity, cache[0].sustain, partials);
 
-        for (int x = 0; x < 4; x++)
+        unsafe
         {
-            if (partials[x] != null)
+            fixed (PatchCache* cachePtr = cache)
             {
-                partials[x]!.StartPartial(this, poly, cache[x], rhythmTemp, partials[cache[x].structurePair]);
+                for (int x = 0; x < 4; x++)
+                {
+                    if (partials[x] != null)
+                    {
+                        partials[x]!.StartPartial(this, poly, cachePtr + x, rhythmTemp, partials[cache[x].structurePair]);
+                    }
+                }
             }
         }
         synth.reportHandler?.OnPolyStateChanged((Bit8u)partNum);
