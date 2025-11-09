@@ -30,6 +30,8 @@ public interface IReportHandler
 }
 
 // Synth class - main synthesizer coordinator
+// NOTE: This is a partial implementation with core synthesis components complete.
+// Many high-level coordination methods are stubs that delegate to complete synthesis classes.
 public unsafe class Synth
 {
     public Poly? abortingPoly;
@@ -39,7 +41,11 @@ public unsafe class Synth
     public IReportHandler? reportHandler;
     public PartialManager? partialManager;
     public MemParams mt32ram;
+    public MemParams mt32default;
     public Bit32u renderedSampleCount;
+    
+    private bool opened = false;
+    private bool activated = false;
     private Bit32u partialCount = Globals.DEFAULT_MAX_PARTIALS;
     private Part?[] parts = new Part?[9];
     
@@ -54,10 +60,43 @@ public unsafe class Synth
     // PCM ROM data
     private Bit16s[] pcmROMData = Array.Empty<Bit16s>();
     private PCMWaveEntry[] pcmWaves = Array.Empty<PCMWaveEntry>();
+    private Bit32u pcmROMSize = 0;
     
     // Sound group names
     private string?[] soundGroupNames = Array.Empty<string?>();
     private Bit8u[] soundGroupIx = new Bit8u[128];
+    
+    // Reverb
+    private BReverbModel?[] reverbModels = new BReverbModel?[4];
+    private BReverbModel? reverbModel = null;
+    private bool reverbOverridden = false;
+    private bool reverbEnabled = true;
+    
+    // MIDI queue
+    private MidiEventQueue? midiQueue = null;
+    
+    // Output configuration  
+    private float outputGain = 1.0f;
+    private float reverbOutputGain = 1.0f;
+    private DACInputMode dacInputMode = DACInputMode.DACInputMode_NICE;
+    private MIDIDelayMode midiDelayMode = MIDIDelayMode.MIDIDelayMode_DELAY_SHORT_MESSAGES_ONLY;
+    private RendererType selectedRendererType = RendererType.RendererType_BIT16S;
+    
+    // Analog output
+    private Analog? analog = null;
+    
+    // Memory regions (for SysEx handling)
+    private MemoryRegion? patchTempMemoryRegion = null;
+    private MemoryRegion? rhythmTempMemoryRegion = null;
+    private MemoryRegion? timbreTempMemoryRegion = null;
+    private MemoryRegion? patchesMemoryRegion = null;
+    private MemoryRegion? timbresMemoryRegion = null;
+    private MemoryRegion? systemMemoryRegion = null;
+    private MemoryRegion? displayMemoryRegion = null;
+    private MemoryRegion? resetMemoryRegion = null;
+    
+    // Display
+    private Display? display = null;
 
     public void PrintDebug(string message)
     {
@@ -363,5 +402,341 @@ public unsafe class Synth
         if (sampleEx > 1.0f) return 1.0f;
         if (sampleEx < -1.0f) return -1.0f;
         return sampleEx;
+    }
+    
+    // ========== Constructor and Lifecycle Methods ==========
+    
+    /// <summary>
+    /// Constructor for the MT-32 synthesizer.
+    /// </summary>
+    /// <param name="useReportHandler">Optional report handler for callbacks</param>
+    public Synth(IReportHandler? useReportHandler = null)
+    {
+        reportHandler = useReportHandler;
+        mt32ram = new MemParams();
+        mt32default = new MemParams();
+        
+        // Initialize state
+        opened = false;
+        activated = false;
+        reverbOverridden = false;
+        partialCount = Globals.DEFAULT_MAX_PARTIALS;
+        
+        // Initialize configuration
+        niceAmpRampEnabled = true;
+        nicePanningEnabled = false;
+        nicePartialMixingEnabled = false;
+        reversedStereoEnabled = false;
+        outputGain = 1.0f;
+        reverbOutputGain = 1.0f;
+        dacInputMode = DACInputMode.DACInputMode_NICE;
+        midiDelayMode = MIDIDelayMode.MIDIDelayMode_DELAY_SHORT_MESSAGES_ONLY;
+        selectedRendererType = RendererType.RendererType_BIT16S;
+        reverbEnabled = true;
+    }
+    
+    /// <summary>
+    /// Opens and initializes the MT-32 synthesizer with ROM images.
+    /// </summary>
+    /// <param name="controlROMImage">Control ROM image</param>
+    /// <param name="pcmROMImage">PCM ROM image</param>
+    /// <param name="usePartialCount">Maximum number of partials (default: 32)</param>
+    /// <param name="analogOutputMode">Analog output mode (default: COARSE)</param>
+    /// <returns>True if successful, false otherwise</returns>
+    public bool Open(ROMImage controlROMImage, ROMImage pcmROMImage, 
+                     Bit32u usePartialCount = Globals.DEFAULT_MAX_PARTIALS,
+                     AnalogOutputMode analogOutputMode = AnalogOutputMode.AnalogOutputMode_COARSE)
+    {
+        if (opened)
+        {
+            return false;
+        }
+        
+        // Load ROMs
+        if (!LoadControlROM(controlROMImage))
+        {
+            return false;
+        }
+        
+        if (!LoadPCMROM(pcmROMImage))
+        {
+            return false;
+        }
+        
+        partialCount = usePartialCount;
+        
+        // Initialize partials
+        partialManager = new PartialManager(this, parts);
+        
+        // Initialize MIDI queue
+        midiQueue = new MidiEventQueue(1024, 32768);
+        
+        // Initialize reverb models
+        InitReverbModels(controlROMFeatures.defaultReverbMT32Compatible);
+        
+        // Initialize analog output
+        analog = Analog.CreateAnalog(analogOutputMode, controlROMFeatures.oldMT32AnalogLPF, selectedRendererType);
+        
+        // Initialize display
+        display = new Display(this);
+        
+        // Initialize memory regions (simplified - full implementation would create all region objects)
+        InitMemoryRegions();
+        
+        opened = true;
+        activated = false;
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Overload of Open with default partial count.
+    /// </summary>
+    public bool Open(ROMImage controlROMImage, ROMImage pcmROMImage, 
+                     AnalogOutputMode analogOutputMode)
+    {
+        return Open(controlROMImage, pcmROMImage, Globals.DEFAULT_MAX_PARTIALS, analogOutputMode);
+    }
+    
+    /// <summary>
+    /// Closes the synthesizer and releases resources.
+    /// </summary>
+    public void Close()
+    {
+        if (!opened)
+        {
+            return;
+        }
+        
+        // Clean up memory regions
+        DeleteMemoryRegions();
+        
+        // Clean up reverb models
+        for (int i = 0; i < reverbModels.Length; i++)
+        {
+            reverbModels[i] = null;
+        }
+        reverbModel = null;
+        
+        // Clean up other components
+        analog = null;
+        display = null;
+        partialManager = null;
+        midiQueue = null;
+        
+        opened = false;
+        activated = false;
+    }
+    
+    /// <summary>
+    /// Returns true if the synthesizer is open and initialized.
+    /// </summary>
+    public bool IsOpen()
+    {
+        return opened;
+    }
+    
+    // ========== ROM Loading Methods (Stubs - full implementation needed) ==========
+    
+    private bool LoadControlROM(ROMImage controlROMImage)
+    {
+        var file = controlROMImage.GetFile();
+        var controlROMInfo = controlROMImage.GetROMInfo();
+        
+        if (controlROMInfo == null || 
+            controlROMInfo.type != ROMInfo.Type.Control ||
+            controlROMInfo.pairType != ROMInfo.PairType.Full)
+        {
+            PrintDebug("Invalid Control ROM Info provided\n");
+            return false;
+        }
+        
+        PrintDebug($"Found Control ROM: {controlROMInfo.shortName}, {controlROMInfo.description}\n");
+        
+        // Copy ROM data
+        var fileData = file.GetData();
+        int copyLen = Math.Min(fileData.Length, controlROMData.Length);
+        for (int i = 0; i < copyLen; i++)
+        {
+            controlROMData[i] = fileData[i];
+        }
+        
+        // Find matching control ROM map
+        // TODO: Implement control ROM map lookup from ControlROMMaps table
+        // For now, return true to allow basic initialization
+        return true;
+    }
+    
+    private bool LoadPCMROM(ROMImage pcmROMImage)
+    {
+        var file = pcmROMImage.GetFile();
+        var pcmROMInfo = pcmROMImage.GetROMInfo();
+        
+        if (pcmROMInfo == null ||
+            pcmROMInfo.type != ROMInfo.Type.PCM ||
+            pcmROMInfo.pairType != ROMInfo.PairType.Full)
+        {
+            return false;
+        }
+        
+        PrintDebug($"Found PCM ROM: {pcmROMInfo.shortName}, {pcmROMInfo.description}\n");
+        
+        // TODO: Implement full PCM ROM loading with bit reordering
+        // For now, just allocate the arrays
+        Bit32u fileSize = (Bit32u)file.GetSize();
+        pcmROMSize = fileSize / 2;
+        pcmROMData = new Bit16s[pcmROMSize];
+        
+        return true;
+    }
+    
+    private void InitReverbModels(bool mt32CompatibleMode)
+    {
+        // Initialize all reverb modes
+        for (int mode = (int)ReverbMode.REVERB_MODE_ROOM; mode <= (int)ReverbMode.REVERB_MODE_TAP_DELAY; mode++)
+        {
+            reverbModels[mode] = BReverbModel.CreateBReverbModel((ReverbMode)mode, mt32CompatibleMode, selectedRendererType);
+        }
+        
+        // Set default reverb model
+        reverbModel = reverbModels[(int)ReverbMode.REVERB_MODE_ROOM];
+    }
+    
+    private void InitMemoryRegions()
+    {
+        // TODO: Create memory region objects for SysEx handling
+        // patchTempMemoryRegion = new PatchTempMemoryRegion(...);
+        // rhythmTempMemoryRegion = new RhythmTempMemoryRegion(...);
+        // etc.
+    }
+    
+    private void DeleteMemoryRegions()
+    {
+        patchTempMemoryRegion = null;
+        rhythmTempMemoryRegion = null;
+        timbreTempMemoryRegion = null;
+        patchesMemoryRegion = null;
+        timbresMemoryRegion = null;
+        systemMemoryRegion = null;
+        displayMemoryRegion = null;
+        resetMemoryRegion = null;
+    }
+    
+    // ========== Configuration Methods ==========
+    
+    public void SetReverbEnabled(bool enabled)
+    {
+        reverbEnabled = enabled;
+    }
+    
+    public bool IsReverbEnabled()
+    {
+        return reverbEnabled;
+    }
+    
+    public void SetReverbOverridden(bool overridden)
+    {
+        reverbOverridden = overridden;
+    }
+    
+    public bool IsReverbOverridden()
+    {
+        return reverbOverridden;
+    }
+    
+    public void SetOutputGain(float gain)
+    {
+        outputGain = gain;
+    }
+    
+    public float GetOutputGain()
+    {
+        return outputGain;
+    }
+    
+    public void SetReverbOutputGain(float gain)
+    {
+        reverbOutputGain = gain;
+    }
+    
+    public float GetReverbOutputGain()
+    {
+        return reverbOutputGain;
+    }
+    
+    public void SetReversedStereoEnabled(bool enabled)
+    {
+        reversedStereoEnabled = enabled;
+    }
+    
+    public bool IsReversedStereoEnabled()
+    {
+        return reversedStereoEnabled;
+    }
+    
+    public void SetNiceAmpRampEnabled(bool enabled)
+    {
+        niceAmpRampEnabled = enabled;
+    }
+    
+    public void SetNicePanningEnabled(bool enabled)
+    {
+        nicePanningEnabled = enabled;
+    }
+    
+    public void SetNicePartialMixingEnabled(bool enabled)
+    {
+        nicePartialMixingEnabled = enabled;
+    }
+    
+    public void SetDACInputMode(DACInputMode mode)
+    {
+        dacInputMode = mode;
+    }
+    
+    public DACInputMode GetDACInputMode()
+    {
+        return dacInputMode;
+    }
+    
+    public void SetMIDIDelayMode(MIDIDelayMode mode)
+    {
+        midiDelayMode = mode;
+    }
+    
+    public MIDIDelayMode GetMIDIDelayMode()
+    {
+        return midiDelayMode;
+    }
+    
+    // ========== Static Utility Methods ==========
+    
+    /// <summary>
+    /// Returns the library version as a string.
+    /// </summary>
+    public static string GetLibraryVersionString()
+    {
+        return "2.7.0-csharp";
+    }
+    
+    /// <summary>
+    /// Returns the library version as an integer (0x00MMmmpp format).
+    /// </summary>
+    public static Bit32u GetLibraryVersionInt()
+    {
+        return 0x00020700; // Version 2.7.0
+    }
+    
+    /// <summary>
+    /// Calculates the checksum for a SysEx message.
+    /// </summary>
+    public static Bit8u CalcSysexChecksum(ReadOnlySpan<Bit8u> data, Bit32u len, Bit8u initChecksum = 0)
+    {
+        Bit8u checksum = initChecksum;
+        for (Bit32u i = 0; i < len; i++)
+        {
+            checksum = (Bit8u)((checksum + data[(int)i]) & 0x7F);
+        }
+        return (Bit8u)((128 - checksum) & 0x7F);
     }
 }
