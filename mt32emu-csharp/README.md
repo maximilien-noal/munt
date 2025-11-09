@@ -11,20 +11,63 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 
 ## Current Status
 
-This is a work in progress. The following components have been converted:
+**22 files completed** - Core infrastructure and synthesis components operational:
 
-- [x] Basic type definitions (Types.cs)
-- [x] Global constants (Globals.cs)
-- [x] Mathematical utilities (MMath.cs)
+### ✅ Completed Components
+
+**Foundation (7 files)**
+- [x] Type definitions with C++ aliases (Types.cs)
+- [x] Global constants and sample rates (Globals.cs)
+- [x] Mathematical utilities for LA32 chip (MMath.cs)
 - [x] Internal types and enumerations (Internals.cs)
 - [x] Public enumerations (Enumerations.cs)
-- [x] Data structures (Structures.cs)
-- [x] Lookup tables (Tables.cs)
-- [ ] Core synthesis classes (in progress)
-- [ ] Main synthesizer class
-- [ ] I/O and MIDI handling
-- [ ] ROM management
-- [ ] Sample rate conversion
+- [x] Memory-mapped data structures (Structures.cs)
+- [x] Pre-computed lookup tables (Tables.cs)
+
+**Synthesis Core (3 files)**
+- [x] LA32Ramp - Hardware-accurate amplitude/filter ramping (LA32Ramp.cs)
+- [x] TVF - Time Variant Filter with envelope control (TVF.cs)
+- [x] TVA - Time Variant Amplifier with 7-phase envelope (TVA.cs)
+- [x] TVP - Time Variant Pitch with LFO and MCU timer emulation (TVP.cs)
+
+**MIDI & I/O (5 files)**
+- [x] Poly - Voice allocation and state management (Poly.cs)
+- [x] MidiEventQueue - Ring buffer for MIDI events (MidiEventQueue.cs)
+- [x] MidiStreamParser - Full MIDI stream parsing with running status (MidiStreamParser.cs)
+- [x] File I/O abstraction with SHA1 support (File.cs, FileStream.cs)
+- [x] Version tracking (VersionInfo.cs)
+
+**Audio Processing (1 file)**
+- [x] SampleRateConverter - Sample rate conversion and timestamp utilities (SampleRateConverter.cs)
+
+**Stub Classes (3 files)** - Ready for full implementation
+- [x] Part.cs - Partial implementation
+- [x] Partial.cs - Partial implementation
+- [x] Synth.cs - Partial implementation
+
+### 🚧 Remaining Work (19+ classes, ~220KB C++)
+- [ ] Complete Part implementation (~23KB)
+- [ ] Complete Partial implementation (~15KB)
+- [ ] Complete Synth implementation (~92KB, most complex)
+- [ ] LA32WaveGenerator (~17KB)
+- [ ] LA32FloatWaveGenerator (~13KB)
+- [ ] PartialManager (~11KB)
+- [ ] BReverbModel (~28KB)
+- [ ] Analog (~19KB)
+- [ ] Display (~17KB)
+- [ ] ROMInfo (~20KB)
+
+### Modern .NET Features Incorporated
+
+- **Span<T> & ReadOnlySpan<T>**: Zero-copy operations for MIDI parsing, audio buffers, and file I/O
+- **stackalloc**: Stack-allocated temporary buffers (zero heap allocation)
+- **unsafe pointers**: Direct memory access for C++ struct compatibility (e.g., `TimbreParam.PartialParam*`)
+- **ref parameters**: Pass-by-reference for efficiency (e.g., `Normalise(ref val)`)
+- **Random.Shared**: Thread-safe random number generation for MCU timer jitter
+- **Interfaces**: Clean abstractions (IMidiReceiver, IMidiReporter, IReportHandler)
+- **IDisposable**: Proper resource management in FileStream
+- **switch expressions**: Clean pattern matching for modes
+- **System.Security.Cryptography.SHA1**: Native .NET hashing
 
 ## Building
 
@@ -40,6 +83,97 @@ dotnet build
 To build in Release mode:
 ```bash
 dotnet build -c Release
+```
+
+## Usage Examples
+
+### Initialize Lookup Tables
+
+```csharp
+using MT32Emu;
+
+// Initialize static lookup tables (call once at startup)
+LA32Ramp.InitTables(Tables.GetInstance());
+TVF.InitTables(Tables.GetInstance());
+TVA.InitTables(Tables.GetInstance());
+```
+
+### Amplitude/Filter Ramping (Zero-Copy)
+
+```csharp
+// Create and configure ramp
+var ramp = new LA32Ramp();
+ramp.StartRamp(target: 255, increment: 0x40); // Ascending ramp
+
+// Generate values
+uint currentValue = ramp.NextValue();
+bool interruptFired = ramp.CheckInterrupt();
+```
+
+### MIDI Event Queue (Zero-Copy)
+
+```csharp
+// Create queue with ring buffer
+var queue = new MidiEventQueue(ringBufferSize: 1024, storageBufferSize: 32768);
+
+// Push SysEx data (zero-copy with ReadOnlySpan)
+ReadOnlySpan<byte> sysexData = GetSysexData();
+queue.PushSysex(sysexData, timestamp: 0);
+
+// Retrieve events
+ref readonly MidiEvent evt = ref queue.PeekMidiEvent();
+```
+
+### Time-Variant Synthesis Components
+
+```csharp
+// Create synthesis components
+var ampRamp = new LA32Ramp();
+var tva = new TVA(partial, ampRamp);
+var cutoffRamp = new LA32Ramp();
+var tvf = new TVF(partial, cutoffRamp);
+var tvp = new TVP(partial);
+
+// Initialize (unsafe required for pointer parameters)
+unsafe
+{
+    tva.Reset(part, partialParam, rhythmTemp);
+    tvf.Reset(partialParam, basePitch);
+    tvp.Reset(part, partialParam);
+}
+
+// Process pitch with hardware-accurate timing
+ushort currentPitch = tvp.NextPitch();
+```
+
+### MIDI Stream Parsing (Zero-Copy)
+
+```csharp
+// Create parser
+var parser = new DefaultMidiStreamParser(synth);
+
+// Parse MIDI data (zero-copy with ReadOnlySpan)
+ReadOnlySpan<byte> midiStream = GetMidiData();
+parser.ParseStream(midiStream);
+```
+
+### Sample Rate Conversion (Zero-Copy)
+
+```csharp
+// Create converter
+var converter = new SampleRateConverter(
+    synth, 
+    targetSampleRate: 48000, 
+    SamplerateConversionQuality.GOOD
+);
+
+// Get output samples (zero-copy with stackalloc)
+Span<short> outputBuffer = stackalloc short[bufferSize];
+converter.GetOutputSamples(outputBuffer);
+
+// Or use float buffers
+Span<float> floatBuffer = stackalloc float[bufferSize];
+converter.GetOutputSamples(floatBuffer);
 ```
 
 ## License
