@@ -70,4 +70,11 @@ public static class Globals
      * CM-32L control ROM is using 1000 bytes, and MT-32 GEN0 is using only 240 bytes (semi-confirmed by now).
      */
     public const uint SYSEX_BUFFER_SIZE = 1000;
+
+    /* MIDI interface data transfer rate in samples. Used to simulate the transfer delay. */
+    public const double MIDI_DATA_TRANSFER_RATE = (double)SAMPLE_RATE / 31250.0 * 8.0;
+
+    /* Size of the control ROM (64KB for MT-32). Note: new-gen MT-32 control ROMs (ver. 2.XX) are twice as big,
+     * but the higher half only contains demo songs in all cases. */
+    public const uint CONTROL_ROM_SIZE = 64 * 1024;
 }
