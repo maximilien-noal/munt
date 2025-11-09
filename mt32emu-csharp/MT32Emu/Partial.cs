@@ -17,6 +17,8 @@
 
 namespace MT32Emu;
 
+using Bit16s = System.Int16;
+
 // Stub class - to be implemented
 public class Partial
 {
@@ -61,6 +63,21 @@ public class Partial
     }
 
     public bool IsRingModulatingSlave()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
+
+    public unsafe ControlROMPCMStruct* GetControlROMPCMStruct()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
+
+    public bool IsPCM()
+    {
+        throw new NotImplementedException("Partial class needs full implementation");
+    }
+
+    public TVA GetTVA()
     {
         throw new NotImplementedException("Partial class needs full implementation");
     }

@@ -18,6 +18,7 @@
 namespace MT32Emu;
 
 using Bit8u = System.Byte;
+using Bit16s = System.Int16;
 
 // Stub class - to be implemented
 public class Part
@@ -43,6 +44,21 @@ public class Part
     }
 
     public Bit8u GetExpression()
+    {
+        throw new NotImplementedException("Part class needs full implementation");
+    }
+
+    public unsafe MemParams.PatchTemp* GetPatchTemp()
+    {
+        throw new NotImplementedException("Part class needs full implementation");
+    }
+
+    public Bit16s GetPitchBend()
+    {
+        throw new NotImplementedException("Part class needs full implementation");
+    }
+
+    public Bit8u GetModulation()
     {
         throw new NotImplementedException("Part class needs full implementation");
     }

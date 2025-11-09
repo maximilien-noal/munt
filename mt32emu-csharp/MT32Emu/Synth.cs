@@ -17,6 +17,8 @@
 
 namespace MT32Emu;
 
+using Bit16s = System.Int16;
+
 // Stub class - to be implemented
 public class Synth
 {
@@ -39,6 +41,11 @@ public class Synth
     }
 
     public bool IsNiceAmpRampEnabled()
+    {
+        throw new NotImplementedException("Synth class needs full implementation");
+    }
+
+    public Bit16s GetMasterTunePitchDelta()
     {
         throw new NotImplementedException("Synth class needs full implementation");
     }
