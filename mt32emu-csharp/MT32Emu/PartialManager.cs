@@ -229,7 +229,7 @@ public class PartialManager
             // With the new partials we're freeing for, we would end up using more partials than we have reserved.
             unsafe
             {
-                if ((synth.GetPart(partNum).GetPatchTemp()->patch.assignMode & 1) != 0)
+                if ((synth.GetPart((Bit8u)partNum).GetPatchTemp()->patch.assignMode & 1) != 0)
                 {
                     // Priority is given to earlier polys, so just give up
                     return false;
@@ -317,7 +317,7 @@ public class PartialManager
             synth.PrintDebug("PartialManager Error: Cannot return freed poly, currently active polys:\n");
             for (Bit32u partNum = 0; partNum < 9; partNum++)
             {
-                Poly? activePoly = synth.GetPart((int)partNum).GetFirstActivePoly();
+                Poly? activePoly = synth.GetPart((Bit8u)partNum).GetFirstActivePoly();
                 Bit32u polyCount = 0;
                 while (activePoly != null)
                 {
