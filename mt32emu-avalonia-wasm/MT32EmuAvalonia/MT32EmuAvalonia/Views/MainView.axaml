@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MT32EmuAvalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MT32EmuAvalonia.Views.MainView"
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+    <vm:MainViewModel />
+  </Design.DataContext>
+
+  <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center" Width="600">
+    <!-- Title -->
+    <TextBlock Text="{Binding Title}" 
+               FontSize="32" 
+               FontWeight="Bold"
+               HorizontalAlignment="Center"/>
+    
+    <!-- Description -->
+    <TextBlock Text="Roland MT-32 Music Synthesizer Emulator" 
+               FontSize="16"
+               HorizontalAlignment="Center"
+               Opacity="0.7"/>
+    
+    <!-- Status -->
+    <Border Background="#F5F5F5" 
+            BorderBrush="#CCCCCC" 
+            BorderThickness="1" 
+            CornerRadius="5"
+            Padding="15"
+            Margin="0,20,0,0">
+      <TextBlock Text="{Binding Status}" 
+                 TextWrapping="Wrap"
+                 HorizontalAlignment="Center"/>
+    </Border>
+    
+    <!-- Control Buttons -->
+    <StackPanel Orientation="Horizontal" 
+                HorizontalAlignment="Center" 
+                Spacing="15"
+                Margin="0,20,0,0">
+      <Button Command="{Binding PlayCommand}"
+              IsEnabled="{Binding !IsPlaying}"
+              Width="120"
+              Height="40"
+              Content="▶ Play" />
+      <Button Command="{Binding StopCommand}"
+              IsEnabled="{Binding IsPlaying}"
+              Width="120"
+              Height="40"
+              Content="■ Stop" />
+    </StackPanel>
+    
+    <!-- Info -->
+    <TextBlock Margin="0,30,0,0"
+               TextWrapping="Wrap"
+               HorizontalAlignment="Center"
+               Opacity="0.6"
+               FontSize="12">
+      <Run Text="This demo plays a pre-defined MIDI file using the MT-32 emulator."/>
+      <LineBreak/>
+      <Run Text="The MIDI data is embedded in the application as a C# array."/>
+      <LineBreak/>
+      <LineBreak/>
+      <Run Text="Note: Full audio playback requires MT-32 ROM files (not included in this demo)."/>
+    </TextBlock>
+  </StackPanel>
+</UserControl>
