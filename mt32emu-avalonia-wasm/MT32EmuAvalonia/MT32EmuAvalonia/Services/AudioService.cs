@@ -4,6 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace MT32EmuAvalonia.Services;
 
@@ -13,6 +14,7 @@ namespace MT32EmuAvalonia.Services;
 /// </summary>
 public class AudioService : IDisposable
 {
+    private readonly ILogger<AudioService> _logger = LoggingService.CreateLogger<AudioService>();
     private readonly int _sampleRate;
     private readonly int _bufferSize;
     private bool _isRunning;
@@ -29,10 +31,10 @@ public class AudioService : IDisposable
 
     public AudioService(int sampleRate = 44100, int bufferSize = 2048)
     {
-        Console.WriteLine($"[AudioService] Constructor started (sampleRate: {sampleRate}, bufferSize: {bufferSize})");
+        _logger.LogDebug("Constructor started (sampleRate: {SampleRate}, bufferSize: {BufferSize})", sampleRate, bufferSize);
         _sampleRate = sampleRate;
         _bufferSize = bufferSize;
-        Console.WriteLine("[AudioService] Constructor completed");
+        _logger.LogInformation("Constructor completed");
     }
 
     /// <summary>
@@ -55,10 +57,10 @@ public class AudioService : IDisposable
     /// </summary>
     public void Start()
     {
-        Console.WriteLine($"[AudioService] Start called (already running: {_isRunning})");
+        _logger.LogDebug("Start called (already running: {IsRunning})", _isRunning);
         if (_isRunning)
         {
-            Console.WriteLine("[AudioService] Already running, ignoring Start request");
+            _logger.LogDebug("Already running, ignoring Start request");
             return;
         }
 
@@ -68,9 +70,9 @@ public class AudioService : IDisposable
         // Start audio generation loop
         // In a complete implementation, this would initialize OwnAudioSharp's audio engine
         // and register a callback for real-time audio generation
-        Console.WriteLine("[AudioService] Starting audio loop task");
+        _logger.LogInformation("Starting audio loop task");
         _audioTask = Task.Run(async () => await AudioLoopAsync(_cancellationTokenSource.Token));
-        Console.WriteLine("[AudioService] Audio loop task started");
+        _logger.LogInformation("Audio loop task started");
     }
 
     /// <summary>
@@ -78,29 +80,29 @@ public class AudioService : IDisposable
     /// </summary>
     public void Stop()
     {
-        Console.WriteLine($"[AudioService] Stop called (running: {_isRunning})");
+        _logger.LogDebug("Stop called (running: {IsRunning})", _isRunning);
         if (!_isRunning)
         {
-            Console.WriteLine("[AudioService] Not running, ignoring Stop request");
+            _logger.LogDebug("Not running, ignoring Stop request");
             return;
         }
 
-        Console.WriteLine("[AudioService] Stopping audio playback");
+        _logger.LogInformation("Stopping audio playback");
         _isRunning = false;
         _cancellationTokenSource?.Cancel();
-        Console.WriteLine("[AudioService] Waiting for audio task to complete");
+        _logger.LogDebug("Waiting for audio task to complete");
         _audioTask?.Wait(TimeSpan.FromSeconds(1));
         _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = null;
-        Console.WriteLine("[AudioService] Audio playback stopped");
+        _logger.LogInformation("Audio playback stopped");
     }
 
     private async Task AudioLoopAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine("[AudioService] AudioLoopAsync started");
+        _logger.LogDebug("AudioLoopAsync started");
         var buffer = new float[_bufferSize];
         var intervalMs = (int)(_bufferSize * 1000.0 / _sampleRate);
-        Console.WriteLine($"[AudioService] Buffer interval: {intervalMs}ms");
+        _logger.LogDebug("Buffer interval: {IntervalMs}ms", intervalMs);
         
         int iterationCount = 0;
         while (!cancellationToken.IsCancellationRequested)
@@ -110,7 +112,7 @@ public class AudioService : IDisposable
                 // Generate audio samples via callback
                 if (iterationCount % 100 == 0)  // Log every 100 iterations to avoid spam
                 {
-                    Console.WriteLine($"[AudioService] Audio loop iteration {iterationCount}");
+                    _logger.LogDebug("Audio loop iteration {Iteration}", iterationCount);
                 }
                 OnGenerateAudio?.Invoke(buffer, _bufferSize);
                 
@@ -125,16 +127,16 @@ public class AudioService : IDisposable
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("[AudioService] AudioLoopAsync cancelled");
+                _logger.LogDebug("AudioLoopAsync cancelled");
                 break;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[AudioService] AudioLoopAsync error: {ex.GetType().Name}: {ex.Message}");
+                _logger.LogError(ex, "AudioLoopAsync error");
                 break;
             }
         }
-        Console.WriteLine($"[AudioService] AudioLoopAsync completed after {iterationCount} iterations");
+        _logger.LogInformation("AudioLoopAsync completed after {Iterations} iterations", iterationCount);
     }
 
     public void Dispose()

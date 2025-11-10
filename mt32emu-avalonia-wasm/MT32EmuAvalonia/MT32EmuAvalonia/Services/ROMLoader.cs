@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace MT32EmuAvalonia.Services;
 
@@ -14,6 +15,7 @@ namespace MT32EmuAvalonia.Services;
 /// </summary>
 public class ROMLoader
 {
+    private static readonly ILogger _logger = LoggingService.CreateLogger("ROMLoader");
     private const string ArchiveOrgBaseUrl = "https://archive.org/download/Roland-MT-32-ROMs/";
     
     /// <summary>
@@ -53,10 +55,10 @@ public class ROMLoader
         string controlRomPath = "MT32_CONTROL.ROM",
         string pcmRomPath = "MT32_PCM.ROM")
     {
-        Console.WriteLine("[ROMLoader] LoadROMs started");
-        Console.WriteLine($"[ROMLoader] Looking for Control ROM at: {controlRomPath}");
-        Console.WriteLine($"[ROMLoader] Looking for PCM ROM at: {pcmRomPath}");
-        Console.WriteLine($"[ROMLoader] Current directory: {Directory.GetCurrentDirectory()}");
+        _logger.LogInformation("LoadROMs started");
+        _logger.LogDebug("Looking for Control ROM at: {ControlRomPath}", controlRomPath);
+        _logger.LogDebug("Looking for PCM ROM at: {PcmRomPath}", pcmRomPath);
+        _logger.LogDebug("Current directory: {CurrentDirectory}", Directory.GetCurrentDirectory());
         
         try
         {
@@ -64,37 +66,38 @@ public class ROMLoader
             byte[]? controlROM = null;
             byte[]? pcmROM = null;
 
-            Console.WriteLine($"[ROMLoader] Checking if Control ROM exists: {controlRomPath}");
+            _logger.LogDebug("Checking if Control ROM exists: {ControlRomPath}", controlRomPath);
             if (File.Exists(controlRomPath))
             {
-                Console.WriteLine($"[ROMLoader] Control ROM file found, reading...");
+                _logger.LogDebug("Control ROM file found, reading...");
                 controlROM = await File.ReadAllBytesAsync(controlRomPath);
-                Console.WriteLine($"[ROMLoader] Control ROM loaded: {controlROM.Length} bytes");
+                _logger.LogInformation("Control ROM loaded: {Size} bytes", controlROM.Length);
             }
             else
             {
-                Console.WriteLine($"[ROMLoader] Control ROM file not found at: {controlRomPath}");
+                _logger.LogDebug("Control ROM file not found at: {Path}", controlRomPath);
             }
 
-            Console.WriteLine($"[ROMLoader] Checking if PCM ROM exists: {pcmRomPath}");
+            _logger.LogDebug("Checking if PCM ROM exists: {PcmRomPath}", pcmRomPath);
             if (File.Exists(pcmRomPath))
             {
-                Console.WriteLine($"[ROMLoader] PCM ROM file found, reading...");
+                _logger.LogDebug("PCM ROM file found, reading...");
                 pcmROM = await File.ReadAllBytesAsync(pcmRomPath);
-                Console.WriteLine($"[ROMLoader] PCM ROM loaded: {pcmROM.Length} bytes");
+                _logger.LogInformation("PCM ROM loaded: {Size} bytes", pcmROM.Length);
             }
             else
             {
-                Console.WriteLine($"[ROMLoader] PCM ROM file not found at: {pcmRomPath}");
+                _logger.LogDebug("PCM ROM file not found at: {Path}", pcmRomPath);
             }
 
-            Console.WriteLine($"[ROMLoader] LoadROMs completed - Control: {(controlROM != null ? "OK" : "MISSING")}, PCM: {(pcmROM != null ? "OK" : "MISSING")}");
+            _logger.LogInformation("LoadROMs completed - Control: {ControlStatus}, PCM: {PCMStatus}",
+                controlROM != null ? "OK" : "MISSING",
+                pcmROM != null ? "OK" : "MISSING");
             return (controlROM, pcmROM);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ROMLoader] LoadROMs failed: {ex.GetType().Name}: {ex.Message}");
-            Console.WriteLine($"[ROMLoader] Stack trace: {ex.StackTrace}");
+            _logger.LogError(ex, "LoadROMs failed");
             return (null, null);
         }
     }

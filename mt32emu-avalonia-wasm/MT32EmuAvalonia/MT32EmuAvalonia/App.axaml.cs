@@ -5,6 +5,8 @@ using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.Logging;
+using MT32EmuAvalonia.Services;
 using MT32EmuAvalonia.ViewModels;
 using MT32EmuAvalonia.Views;
 
@@ -12,49 +14,51 @@ namespace MT32EmuAvalonia;
 
 public partial class App : Application
 {
+    private static readonly ILogger _logger = LoggingService.CreateLogger("App");
+
     public override void Initialize()
     {
-        Console.WriteLine("[App] Initialize started");
+        _logger.LogInformation("Initialize started");
         AvaloniaXamlLoader.Load(this);
-        Console.WriteLine("[App] Initialize completed");
+        _logger.LogInformation("Initialize completed");
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
-        Console.WriteLine("[App] OnFrameworkInitializationCompleted started");
-        Console.WriteLine($"[App] ApplicationLifetime type: {ApplicationLifetime?.GetType().Name ?? "NULL"}");
+        _logger.LogInformation("OnFrameworkInitializationCompleted started");
+        _logger.LogDebug("ApplicationLifetime type: {LifetimeType}", ApplicationLifetime?.GetType().Name ?? "NULL");
         
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            Console.WriteLine("[App] Running in Desktop mode");
+            _logger.LogInformation("Running in Desktop mode");
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
-            Console.WriteLine("[App] Creating MainWindow and MainViewModel");
+            _logger.LogDebug("Creating MainWindow and MainViewModel");
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainViewModel()
             };
-            Console.WriteLine("[App] MainWindow created and assigned");
+            _logger.LogInformation("MainWindow created and assigned");
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
-            Console.WriteLine("[App] Running in SingleView mode (Browser/Mobile)");
-            Console.WriteLine("[App] Creating MainView and MainViewModel");
+            _logger.LogInformation("Running in SingleView mode (Browser/Mobile)");
+            _logger.LogDebug("Creating MainView and MainViewModel");
             singleViewPlatform.MainView = new MainView
             {
                 DataContext = new MainViewModel()
             };
-            Console.WriteLine("[App] MainView created and assigned");
+            _logger.LogInformation("MainView created and assigned");
         }
         else
         {
-            Console.WriteLine("[App] WARNING: Unknown ApplicationLifetime type!");
+            _logger.LogWarning("Unknown ApplicationLifetime type!");
         }
 
-        Console.WriteLine("[App] Calling base.OnFrameworkInitializationCompleted");
+        _logger.LogDebug("Calling base.OnFrameworkInitializationCompleted");
         base.OnFrameworkInitializationCompleted();
-        Console.WriteLine("[App] OnFrameworkInitializationCompleted completed");
+        _logger.LogInformation("OnFrameworkInitializationCompleted completed");
     }
 
     private void DisableAvaloniaDataAnnotationValidation()

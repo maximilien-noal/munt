@@ -1,12 +1,14 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using MT32EmuAvalonia.Services;
 
 namespace MT32EmuAvalonia.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
+    private readonly ILogger<MainViewModel> _logger = LoggingService.CreateLogger<MainViewModel>();
     private readonly AudioService _audioService;
     private readonly MT32PlayerService _playerService;
 
@@ -21,25 +23,24 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        Console.WriteLine("[MainViewModel] Constructor started");
+        _logger.LogInformation("Constructor started");
         try
         {
-            Console.WriteLine("[MainViewModel] Creating AudioService (sampleRate: 44100, bufferSize: 2048)");
+            _logger.LogDebug("Creating AudioService (sampleRate: 44100, bufferSize: 2048)");
             _audioService = new AudioService(sampleRate: 44100, bufferSize: 2048);
-            Console.WriteLine("[MainViewModel] AudioService created successfully");
+            _logger.LogInformation("AudioService created successfully");
             
-            Console.WriteLine("[MainViewModel] Creating MT32PlayerService");
+            _logger.LogDebug("Creating MT32PlayerService");
             _playerService = new MT32PlayerService(_audioService);
-            Console.WriteLine("[MainViewModel] MT32PlayerService created successfully");
+            _logger.LogInformation("MT32PlayerService created successfully");
             
             // Initialize asynchronously
-            Console.WriteLine("[MainViewModel] Starting async initialization");
+            _logger.LogDebug("Starting async initialization");
             _ = InitializePlayerAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MainViewModel] Constructor failed: {ex.GetType().Name}: {ex.Message}");
-            Console.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
+            _logger.LogError(ex, "Constructor failed");
             Status = $"Initialization error: {ex.Message}";
             throw;
         }
@@ -47,47 +48,42 @@ public partial class MainViewModel : ViewModelBase
 
     private async System.Threading.Tasks.Task InitializePlayerAsync()
     {
-        Console.WriteLine("[MainViewModel] InitializePlayerAsync started");
+        _logger.LogInformation("InitializePlayerAsync started");
         try
         {
             Status = "Initializing MT-32 emulator...";
-            Console.WriteLine("[MainViewModel] Calling MT32PlayerService.InitializeAsync");
+            _logger.LogDebug("Calling MT32PlayerService.InitializeAsync");
             
             // Initialize the MT-32 emulator with ROMs from archive.org
             if (await _playerService.InitializeAsync())
             {
-                Console.WriteLine("[MainViewModel] MT32PlayerService initialized successfully");
+                _logger.LogInformation("MT32PlayerService initialized successfully");
                 Status = "Loading MIDI file...";
                 
                 // Load the embedded MIDI file
-                Console.WriteLine($"[MainViewModel] Loading MIDI file (size: {MidiData.TestMidiFile.Length} bytes)");
+                _logger.LogDebug("Loading MIDI file (size: {FileSize} bytes)", MidiData.TestMidiFile.Length);
                 if (_playerService.LoadMidiFile(MidiData.TestMidiFile))
                 {
-                    Console.WriteLine("[MainViewModel] MIDI file loaded successfully");
+                    _logger.LogInformation("MIDI file loaded successfully");
                     Status = "Ready to play! Click Play to start.";
                 }
                 else
                 {
-                    Console.WriteLine($"[MainViewModel] MIDI file loading failed: {_playerService.Status}");
+                    _logger.LogWarning("MIDI file loading failed: {Status}", _playerService.Status);
                     Status = _playerService.Status;
                 }
             }
             else
             {
-                Console.WriteLine($"[MainViewModel] MT32PlayerService initialization failed: {_playerService.Status}");
+                _logger.LogWarning("MT32PlayerService initialization failed: {Status}", _playerService.Status);
                 Status = _playerService.Status;
             }
             
-            Console.WriteLine($"[MainViewModel] InitializePlayerAsync completed. Final status: {Status}");
+            _logger.LogInformation("InitializePlayerAsync completed. Final status: {Status}", Status);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MainViewModel] InitializePlayerAsync failed: {ex.GetType().Name}: {ex.Message}");
-            Console.WriteLine($"[MainViewModel] Stack trace: {ex.StackTrace}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"[MainViewModel] Inner exception: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
-            }
+            _logger.LogError(ex, "InitializePlayerAsync failed");
             Status = $"Initialization failed: {ex.Message}";
         }
     }
@@ -95,20 +91,20 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void Play()
     {
-        Console.WriteLine("[MainViewModel] Play command invoked");
+        _logger.LogDebug("Play command invoked");
         if (!IsPlaying)
         {
             try
             {
-                Console.WriteLine("[MainViewModel] Starting playback");
+                _logger.LogInformation("Starting playback");
                 _playerService.Play();
                 IsPlaying = true;
                 Status = "Playing MT-32 music...";
-                Console.WriteLine("[MainViewModel] Playback started");
+                _logger.LogInformation("Playback started");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[MainViewModel] Play failed: {ex.GetType().Name}: {ex.Message}");
+                _logger.LogError(ex, "Play failed");
                 Status = $"Playback error: {ex.Message}";
             }
         }
@@ -117,20 +113,20 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void Stop()
     {
-        Console.WriteLine("[MainViewModel] Stop command invoked");
+        _logger.LogDebug("Stop command invoked");
         if (IsPlaying)
         {
             try
             {
-                Console.WriteLine("[MainViewModel] Stopping playback");
+                _logger.LogInformation("Stopping playback");
                 _playerService.Stop();
                 IsPlaying = false;
                 Status = "Stopped. Click Play to restart.";
-                Console.WriteLine("[MainViewModel] Playback stopped");
+                _logger.LogInformation("Playback stopped");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[MainViewModel] Stop failed: {ex.GetType().Name}: {ex.Message}");
+                _logger.LogError(ex, "Stop failed");
                 Status = $"Stop error: {ex.Message}";
             }
         }
