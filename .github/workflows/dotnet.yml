@@ -24,6 +24,8 @@ jobs:
   build:
     name: Build and Test
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -61,6 +63,8 @@ jobs:
     name: Create NuGet Package
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     
     steps:
@@ -102,6 +106,8 @@ jobs:
     name: Publish to NuGet
     needs: pack
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event_name == 'release'
     environment:
       name: nuget
