@@ -17,6 +17,8 @@
 
 namespace MT32Emu;
 
+using Bit8u = System.Byte;
+
 public static class Globals
 {
     /* Sample rate to use in mixing. With the progress of development, we've found way too many thing dependent.
@@ -70,6 +72,20 @@ public static class Globals
      * CM-32L control ROM is using 1000 bytes, and MT-32 GEN0 is using only 240 bytes (semi-confirmed by now).
      */
     public const uint SYSEX_BUFFER_SIZE = 1000;
+    
+    // SysEx constants
+    public const Bit8u SYSEX_MANUFACTURER_ROLAND = 0x41;
+    public const Bit8u SYSEX_MDL_MT32 = 0x16;
+    public const Bit8u SYSEX_MDL_D50 = 0x14;
+    public const Bit8u SYSEX_CMD_RQ1 = 0x11; // Request data #1
+    public const Bit8u SYSEX_CMD_DT1 = 0x12; // Data set 1
+    public const Bit8u SYSEX_CMD_WSD = 0x40; // Want to send data
+    public const Bit8u SYSEX_CMD_RQD = 0x41; // Request data
+    public const Bit8u SYSEX_CMD_DAT = 0x42; // Data set
+    public const Bit8u SYSEX_CMD_ACK = 0x43; // Acknowledge
+    public const Bit8u SYSEX_CMD_EOD = 0x45; // End of data
+    public const Bit8u SYSEX_CMD_ERR = 0x4E; // Communications error
+    public const Bit8u SYSEX_CMD_RJC = 0x4F; // Rejection
 
     /* MIDI interface data transfer rate in samples. Used to simulate the transfer delay. */
     public const double MIDI_DATA_TRANSFER_RATE = (double)SAMPLE_RATE / 31250.0 * 8.0;

@@ -60,7 +60,19 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 - [x] ROMInfo.cs - **COMPLETE** ROM identification with SHA1 hashing, ROM pairing/merging, machine configurations
 - [x] BReverbModel.cs - **COMPLETE** Boss reverb emulation with all 4 modes (Room, Hall, Plate, Tap Delay)
 - [x] Analog.cs - **COMPLETE** Analog circuit emulation with LPF (Coarse, Accurate, Oversampled modes)
-- [x] Synth.cs - Stub methods and infrastructure (needs core implementation for full functionality)
+- [x] Synth.cs - **ENHANCED** (1011 lines) with essential lifecycle, configuration, and MIDI queue management
+
+**Synth.cs Status (Enhanced - November 2025)**
+- ✅ Constructor and initialization
+- ✅ Open/Close/IsOpen lifecycle methods
+- ✅ ROM loading (LoadControlROM, LoadPCMROM)
+- ✅ MIDI queue management (FlushMIDIQueue, SetMIDIEventQueueSize, ConfigureMIDIEventQueueSysexStorage)
+- ✅ Configuration methods (20+ getters/setters for reverb, output gain, DAC mode, renderer type, etc.)
+- ✅ Query methods (HasActivePartials, IsActive, GetPartialCount, GetSelectedRendererType, etc.)
+- ✅ Static utilities (GetLibraryVersionString, CalcSysexChecksum)
+- ⏳ MIDI playback (PlayMsgNow, PlayMsgOnPart, PlaySysexNow - stubs with TODO)
+- ⏳ Render methods (RenderStreams - stubs with TODO)
+- ⏳ Memory region implementations (stubs with TODO)
 
 ### ✅ Translation Complete!
 
@@ -72,8 +84,9 @@ All core C++ files have been translated to C#. The library now includes:
 - MIDI parsing and event handling
 - Sample rate conversion
 - LCD display emulation
+- **Essential synthesizer lifecycle and configuration (Synth.cs)**
 
-**Note:** Synth.cs contains stub implementations for high-level coordination methods. The core synthesis functionality is complete in the supporting classes.
+**Note:** Synth.cs now has essential functionality (1011 lines vs. C++ 3352 lines). Core synthesis components are complete. Advanced coordination methods (MIDI routing, rendering pipeline) are documented stubs with clear extension points.
 
 ### Modern .NET Features Incorporated
 

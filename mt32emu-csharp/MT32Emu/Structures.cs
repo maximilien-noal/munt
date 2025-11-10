@@ -319,6 +319,194 @@ public unsafe struct PatchCache
     public TimbreParam.PartialParam* partialParam;
 }
 
+// Static array of known Control ROM maps
+public static class ControlROMMaps
+{
+    public static readonly ControlROMMap[] Maps = new ControlROMMap[]
+    {
+        // ctrl_mt32_1_04
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_1_04",
+            featureSet = ControlROMFeatureSets.OLD_MT32_ELDER,
+            pcmTable = 0x3000, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x0000, timbreACompressed = false,
+            timbreBMap = 0xC000, timbreBOffset = 0x4000, timbreBCompressed = false,
+            timbreRMap = 0x3200, timbreRCount = 30,
+            rhythmSettings = 0x73A6, rhythmSettingsCount = 85,
+            reserveSettings = 0x57C7, panSettings = 0x57E2, programSettings = 0x57D0,
+            rhythmMaxTable = 0x5252, patchMaxTable = 0x525E, systemMaxTable = 0x526E, timbreMaxTable = 0x520A,
+            soundGroupsTable = 0x7064, soundGroupsCount = 19,
+            startupMessage = 0x217A, sysexErrorMessage = 0x4BB6
+        },
+        // ctrl_mt32_1_05
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_1_05",
+            featureSet = ControlROMFeatureSets.OLD_MT32_ELDER,
+            pcmTable = 0x3000, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x0000, timbreACompressed = false,
+            timbreBMap = 0xC000, timbreBOffset = 0x4000, timbreBCompressed = false,
+            timbreRMap = 0x3200, timbreRCount = 30,
+            rhythmSettings = 0x7414, rhythmSettingsCount = 85,
+            reserveSettings = 0x57C7, panSettings = 0x57E2, programSettings = 0x57D0,
+            rhythmMaxTable = 0x5252, patchMaxTable = 0x525E, systemMaxTable = 0x526E, timbreMaxTable = 0x520A,
+            soundGroupsTable = 0x70CA, soundGroupsCount = 19,
+            startupMessage = 0x217A, sysexErrorMessage = 0x4BB6
+        },
+        // ctrl_mt32_1_06
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_1_06",
+            featureSet = ControlROMFeatureSets.OLD_MT32_LATER,
+            pcmTable = 0x3000, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x0000, timbreACompressed = false,
+            timbreBMap = 0xC000, timbreBOffset = 0x4000, timbreBCompressed = false,
+            timbreRMap = 0x3200, timbreRCount = 30,
+            rhythmSettings = 0x7414, rhythmSettingsCount = 85,
+            reserveSettings = 0x57D9, panSettings = 0x57F4, programSettings = 0x57E2,
+            rhythmMaxTable = 0x5264, patchMaxTable = 0x5270, systemMaxTable = 0x5280, timbreMaxTable = 0x521C,
+            soundGroupsTable = 0x70CA, soundGroupsCount = 19,
+            startupMessage = 0x217A, sysexErrorMessage = 0x4BBA
+        },
+        // ctrl_mt32_1_07
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_1_07",
+            featureSet = ControlROMFeatureSets.OLD_MT32_LATER,
+            pcmTable = 0x3000, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x0000, timbreACompressed = false,
+            timbreBMap = 0xC000, timbreBOffset = 0x4000, timbreBCompressed = false,
+            timbreRMap = 0x3200, timbreRCount = 30,
+            rhythmSettings = 0x73FE, rhythmSettingsCount = 85,
+            reserveSettings = 0x57B1, panSettings = 0x57CC, programSettings = 0x57BA,
+            rhythmMaxTable = 0x523C, patchMaxTable = 0x5248, systemMaxTable = 0x5258, timbreMaxTable = 0x51F4,
+            soundGroupsTable = 0x70B0, soundGroupsCount = 19,
+            startupMessage = 0x217A, sysexErrorMessage = 0x4B92
+        },
+        // ctrl_mt32_bluer
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_bluer",
+            featureSet = ControlROMFeatureSets.OLD_MT32_LATER,
+            pcmTable = 0x3000, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x0000, timbreACompressed = false,
+            timbreBMap = 0xC000, timbreBOffset = 0x4000, timbreBCompressed = false,
+            timbreRMap = 0x3200, timbreRCount = 30,
+            rhythmSettings = 0x741C, rhythmSettingsCount = 85,
+            reserveSettings = 0x57E5, panSettings = 0x5800, programSettings = 0x57EE,
+            rhythmMaxTable = 0x5270, patchMaxTable = 0x527C, systemMaxTable = 0x528C, timbreMaxTable = 0x5228,
+            soundGroupsTable = 0x70CE, soundGroupsCount = 19,
+            startupMessage = 0x217A, sysexErrorMessage = 0x4BC6
+        },
+        // ctrl_mt32_2_03
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_2_03",
+            featureSet = ControlROMFeatureSets.NEW_MT32_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4F49, panSettings = 0x4F64, programSettings = 0x4F52,
+            rhythmMaxTable = 0x4885, patchMaxTable = 0x4889, systemMaxTable = 0x48A2, timbreMaxTable = 0x48B9,
+            soundGroupsTable = 0x5A44, soundGroupsCount = 19,
+            startupMessage = 0x1EF0, sysexErrorMessage = 0x4066
+        },
+        // ctrl_mt32_2_04
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_2_04",
+            featureSet = ControlROMFeatureSets.NEW_MT32_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4F5D, panSettings = 0x4F78, programSettings = 0x4F66,
+            rhythmMaxTable = 0x4899, patchMaxTable = 0x489D, systemMaxTable = 0x48B6, timbreMaxTable = 0x48CD,
+            soundGroupsTable = 0x5A58, soundGroupsCount = 19,
+            startupMessage = 0x1EF0, sysexErrorMessage = 0x406D
+        },
+        // ctrl_mt32_2_06
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_2_06",
+            featureSet = ControlROMFeatureSets.NEW_MT32_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4F69, panSettings = 0x4F84, programSettings = 0x4F72,
+            rhythmMaxTable = 0x48A5, patchMaxTable = 0x48A9, systemMaxTable = 0x48C2, timbreMaxTable = 0x48D9,
+            soundGroupsTable = 0x5A64, soundGroupsCount = 19,
+            startupMessage = 0x1EF0, sysexErrorMessage = 0x4021
+        },
+        // ctrl_mt32_2_07
+        new ControlROMMap
+        {
+            shortName = "ctrl_mt32_2_07",
+            featureSet = ControlROMFeatureSets.NEW_MT32_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 128,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4F81, panSettings = 0x4F9C, programSettings = 0x4F8A,
+            rhythmMaxTable = 0x48B9, patchMaxTable = 0x48BD, systemMaxTable = 0x48D6, timbreMaxTable = 0x48ED,
+            soundGroupsTable = 0x5A78, soundGroupsCount = 19,
+            startupMessage = 0x1EE7, sysexErrorMessage = 0x4035
+        },
+        // ctrl_cm32l_1_00
+        new ControlROMMap
+        {
+            shortName = "ctrl_cm32l_1_00",
+            featureSet = ControlROMFeatureSets.NEW_MT32_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 256,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4F65, panSettings = 0x4F80, programSettings = 0x4F6E,
+            rhythmMaxTable = 0x48A1, patchMaxTable = 0x48A5, systemMaxTable = 0x48BE, timbreMaxTable = 0x48D5,
+            soundGroupsTable = 0x5A6C, soundGroupsCount = 19,
+            startupMessage = 0x1EF0, sysexErrorMessage = 0x401D
+        },
+        // ctrl_cm32l_1_02
+        new ControlROMMap
+        {
+            shortName = "ctrl_cm32l_1_02",
+            featureSet = ControlROMFeatureSets.NEW_MT32_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 256,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4F93, panSettings = 0x4FAE, programSettings = 0x4F9C,
+            rhythmMaxTable = 0x48CB, patchMaxTable = 0x48CF, systemMaxTable = 0x48E8, timbreMaxTable = 0x48FF,
+            soundGroupsTable = 0x5A96, soundGroupsCount = 19,
+            startupMessage = 0x1EE7, sysexErrorMessage = 0x4047
+        },
+        // ctrl_cm32ln_1_00
+        new ControlROMMap
+        {
+            shortName = "ctrl_cm32ln_1_00",
+            featureSet = ControlROMFeatureSets.CM32LN_COMPATIBLE,
+            pcmTable = 0x8100, pcmCount = 256,
+            timbreAMap = 0x8000, timbreAOffset = 0x8000, timbreACompressed = true,
+            timbreBMap = 0x8080, timbreBOffset = 0x8000, timbreBCompressed = true,
+            timbreRMap = 0x8500, timbreRCount = 64,
+            rhythmSettings = 0x8580, rhythmSettingsCount = 85,
+            reserveSettings = 0x4EC7, panSettings = 0x4EE2, programSettings = 0x4ED0,
+            rhythmMaxTable = 0x47FF, patchMaxTable = 0x4803, systemMaxTable = 0x481C, timbreMaxTable = 0x4833,
+            soundGroupsTable = 0x55A2, soundGroupsCount = 19,
+            startupMessage = 0x1F59, sysexErrorMessage = 0x3F7C
+        }
+    };
+}
+
 // Predefined ControlROMFeatureSet configurations for different MT-32 models
 public static class ControlROMFeatureSets
 {
