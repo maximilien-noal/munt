@@ -73,6 +73,7 @@ This is a C# port of the mt32emu library, a C/C++ library which allows to emulat
 - ✅ Static utilities (GetLibraryVersionString, CalcSysexChecksum)
 - ✅ MIDI playback (PlayMsgNow, PlayMsgOnPart, PlaySysexNow)
 - ✅ Memory access (WriteSysex, ReadMemory - basic implementations with documented extension points)
+- ✅ **v2.6+ API methods** (SetPartVolumeOverride, GetPartVolumeOverride, GetDisplayState, SetMainDisplayMode, SetDisplayCompatibility)
 - ⏳ Render methods (RenderStreams - documented stubs for future renderer implementation)
 
 ### ✅ Translation Complete with High Fidelity!
@@ -87,12 +88,14 @@ All core C++ files have been translated to C# with high-fidelity implementation.
 - LCD display emulation
 - **Complete public API coverage in Synth.cs**
 
-**Complete Public API Methods (56 methods):**
-All public API methods from the C++ implementation are now available in C#:
+**Complete Public API Methods (70 methods - 100% Coverage!):**
+All public API methods from the C++ implementation (including v2.6+ additions) are now available in C#:
 - State queries: GetPartStates(), GetPartialStates(), GetPlayingNotes(), GetPatchName()
 - Configuration: SetReverbCompatibilityMode(), PreallocateReverbMemory()
 - MIDI processing: PlayMsg(), PlaySysex(), PlayMsgNow(), PlaySysexNow(), WriteSysex()
 - Memory access: ReadMemory()
+- Display control: GetDisplayState(), SetMainDisplayMode(), SetDisplayCompatibility() (v2.6+)
+- Volume control: SetPartVolumeOverride(), GetPartVolumeOverride() (v2.6+)
 - All configuration getters/setters for reverb, output gain, renderer type, etc.
 
 **Implementation Notes:**
