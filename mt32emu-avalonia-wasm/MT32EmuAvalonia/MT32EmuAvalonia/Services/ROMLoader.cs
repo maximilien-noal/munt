@@ -53,26 +53,48 @@ public class ROMLoader
         string controlRomPath = "MT32_CONTROL.ROM",
         string pcmRomPath = "MT32_PCM.ROM")
     {
+        Console.WriteLine("[ROMLoader] LoadROMs started");
+        Console.WriteLine($"[ROMLoader] Looking for Control ROM at: {controlRomPath}");
+        Console.WriteLine($"[ROMLoader] Looking for PCM ROM at: {pcmRomPath}");
+        Console.WriteLine($"[ROMLoader] Current directory: {Directory.GetCurrentDirectory()}");
+        
         try
         {
             // Try to load from files if they exist
             byte[]? controlROM = null;
             byte[]? pcmROM = null;
 
+            Console.WriteLine($"[ROMLoader] Checking if Control ROM exists: {controlRomPath}");
             if (File.Exists(controlRomPath))
             {
+                Console.WriteLine($"[ROMLoader] Control ROM file found, reading...");
                 controlROM = await File.ReadAllBytesAsync(controlRomPath);
+                Console.WriteLine($"[ROMLoader] Control ROM loaded: {controlROM.Length} bytes");
+            }
+            else
+            {
+                Console.WriteLine($"[ROMLoader] Control ROM file not found at: {controlRomPath}");
             }
 
+            Console.WriteLine($"[ROMLoader] Checking if PCM ROM exists: {pcmRomPath}");
             if (File.Exists(pcmRomPath))
             {
+                Console.WriteLine($"[ROMLoader] PCM ROM file found, reading...");
                 pcmROM = await File.ReadAllBytesAsync(pcmRomPath);
+                Console.WriteLine($"[ROMLoader] PCM ROM loaded: {pcmROM.Length} bytes");
+            }
+            else
+            {
+                Console.WriteLine($"[ROMLoader] PCM ROM file not found at: {pcmRomPath}");
             }
 
+            Console.WriteLine($"[ROMLoader] LoadROMs completed - Control: {(controlROM != null ? "OK" : "MISSING")}, PCM: {(pcmROM != null ? "OK" : "MISSING")}");
             return (controlROM, pcmROM);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine($"[ROMLoader] LoadROMs failed: {ex.GetType().Name}: {ex.Message}");
+            Console.WriteLine($"[ROMLoader] Stack trace: {ex.StackTrace}");
             return (null, null);
         }
     }
