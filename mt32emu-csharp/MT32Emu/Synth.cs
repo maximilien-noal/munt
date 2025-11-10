@@ -46,6 +46,15 @@ public unsafe struct DACOutputStreams<T> where T : unmanaged
 // Many high-level coordination methods are stubs that delegate to complete synthesis classes.
 public unsafe class Synth
 {
+    // Mapping from TVA phase to PartialState for external API
+    private static readonly PartialState[] PARTIAL_PHASE_TO_STATE = new PartialState[8]
+    {
+        PartialState.PartialState_ATTACK, PartialState.PartialState_ATTACK, 
+        PartialState.PartialState_ATTACK, PartialState.PartialState_ATTACK,
+        PartialState.PartialState_SUSTAIN, PartialState.PartialState_SUSTAIN, 
+        PartialState.PartialState_RELEASE, PartialState.PartialState_INACTIVE
+    };
+    
     public Poly? abortingPoly;
     public ControlROMFeatureSet controlROMFeatures;
     public ControlROMMap controlROMMap;
@@ -83,6 +92,7 @@ public unsafe class Synth
     private BReverbModel? reverbModel = null;
     private bool reverbOverridden = false;
     private bool reverbEnabled = true;
+    private bool preallocatedReverbMemory = false;
     
     // MIDI queue
     private MidiEventQueue? midiQueue = null;
@@ -119,6 +129,25 @@ public unsafe class Synth
     public void PrintDebug(string message)
     {
         Console.Write(message);
+    }
+    
+    /// <summary>
+    /// Helper function to get the state of a partial from the partial manager.
+    /// </summary>
+    private static PartialState GetPartialState(PartialManager partialManager, uint partialNum)
+    {
+        Partial? partial = partialManager.GetPartial(partialNum);
+        if (partial == null) return PartialState.PartialState_INACTIVE;
+        
+        if (!partial.IsActive()) 
+            return PartialState.PartialState_INACTIVE;
+        
+        TVA? tva = partial.GetTVA();
+        if (tva == null)
+            return PartialState.PartialState_INACTIVE;
+            
+        int phase = tva.GetPhase();
+        return PARTIAL_PHASE_TO_STATE[phase];
     }
 
     public bool IsAbortingPoly()
@@ -895,8 +924,19 @@ public unsafe class Synth
     /// </summary>
     public bool HasActivePartials()
     {
-        // TODO: Check if any partials are active
-        // This would involve checking all partials in the partial manager
+        if (!opened || partialManager == null)
+        {
+            return false;
+        }
+        
+        for (uint partialNum = 0; partialNum < partialCount; partialNum++)
+        {
+            Partial? partial = partialManager.GetPartial(partialNum);
+            if (partial != null && partial.IsActive())
+            {
+                return true;
+            }
+        }
         return false;
     }
     
@@ -960,8 +1000,11 @@ public unsafe class Synth
     /// </summary>
     public bool IsMT32ReverbCompatibilityMode()
     {
-        // TODO: Track actual reverb compatibility mode (may differ from default)
-        return controlROMFeatures.defaultReverbMT32Compatible;
+        if (!opened || reverbModels[0] == null)
+        {
+            return false;
+        }
+        return reverbModels[0].IsMT32Compatible(ReverbMode.REVERB_MODE_ROOM);
     }
     
     /// <summary>
@@ -1018,6 +1061,210 @@ public unsafe class Synth
         }
         
         return soundGroupNames[soundGroupIndex];
+    }
+    
+    /// <summary>
+    /// Fills in current states of all the parts into the array provided.
+    /// The array must have at least 9 entries to fit values for all the parts.
+    /// If the value returned for a part is true, there is at least one active
+    /// non-releasing partial playing on this part.
+    /// </summary>
+    /// <param name="partStates">Array to receive part states (must have at least 9 elements)</param>
+    public void GetPartStates(bool[] partStates)
+    {
+        if (partStates.Length < 9)
+        {
+            throw new ArgumentException("partStates array must have at least 9 elements", nameof(partStates));
+        }
+        
+        if (!opened)
+        {
+            Array.Clear(partStates, 0, 9);
+            return;
+        }
+        
+        for (int partNumber = 0; partNumber < 9; partNumber++)
+        {
+            Part? part = parts[partNumber];
+            partStates[partNumber] = (part != null) && (part.GetActiveNonReleasingPartialCount() > 0);
+        }
+    }
+    
+    /// <summary>
+    /// Returns current states of all the parts as a bit set.
+    /// The least significant bit corresponds to the state of part 1,
+    /// total of 9 bits hold the states of all the parts.
+    /// </summary>
+    /// <returns>Bit set representing part states</returns>
+    public Bit32u GetPartStates()
+    {
+        if (!opened) return 0;
+        
+        bool[] partStates = new bool[9];
+        GetPartStates(partStates);
+        
+        Bit32u bitSet = 0;
+        for (int partNumber = 8; partNumber >= 0; partNumber--)
+        {
+            bitSet = (bitSet << 1) | (partStates[partNumber] ? 1u : 0u);
+        }
+        return bitSet;
+    }
+    
+    /// <summary>
+    /// Fills in current states of all the partials into the array provided.
+    /// The array must be large enough to accommodate states of all the partials.
+    /// </summary>
+    /// <param name="partialStates">Array to receive partial states</param>
+    public void GetPartialStates(PartialState[] partialStates)
+    {
+        if (partialStates.Length < partialCount)
+        {
+            throw new ArgumentException($"partialStates array must have at least {partialCount} elements", nameof(partialStates));
+        }
+        
+        if (!opened || partialManager == null)
+        {
+            Array.Clear(partialStates, 0, (int)partialCount);
+            return;
+        }
+        
+        for (uint partialNum = 0; partialNum < partialCount; partialNum++)
+        {
+            partialStates[partialNum] = GetPartialState(partialManager, partialNum);
+        }
+    }
+    
+    /// <summary>
+    /// Fills in current states of all the partials into the array provided.
+    /// Each byte in the array holds states of 4 partials starting from the
+    /// least significant bits. The state of each partial is packed in a pair of bits.
+    /// </summary>
+    /// <param name="partialStates">Array to receive packed partial states</param>
+    public void GetPartialStates(byte[] partialStates)
+    {
+        uint quartCount = (partialCount + 3) >> 2;
+        if (partialStates.Length < quartCount)
+        {
+            throw new ArgumentException($"partialStates array must have at least {quartCount} elements", nameof(partialStates));
+        }
+        
+        if (!opened || partialManager == null)
+        {
+            Array.Clear(partialStates, 0, (int)quartCount);
+            return;
+        }
+        
+        for (uint quartNum = 0; (4 * quartNum) < partialCount; quartNum++)
+        {
+            Bit8u packedStates = 0;
+            for (uint i = 0; i < 4; i++)
+            {
+                uint partialNum = (4 * quartNum) + i;
+                if (partialCount <= partialNum) break;
+                
+                PartialState partialState = GetPartialState(partialManager, partialNum);
+                packedStates |= (Bit8u)(((int)partialState & 3) << (2 * (int)i));
+            }
+            partialStates[quartNum] = packedStates;
+        }
+    }
+    
+    /// <summary>
+    /// Fills in information about currently playing notes on the specified part.
+    /// Returns the number of currently playing notes on the specified part.
+    /// </summary>
+    /// <param name="partNumber">Part number (0-7 for Part 1-8, or 8 for Rhythm)</param>
+    /// <param name="keys">Array to receive note keys</param>
+    /// <param name="velocities">Array to receive note velocities</param>
+    /// <returns>Number of playing notes</returns>
+    public Bit32u GetPlayingNotes(Bit8u partNumber, byte[] keys, byte[] velocities)
+    {
+        Bit32u playingNotes = 0;
+        if (opened && (partNumber < 9))
+        {
+            Part? part = parts[partNumber];
+            if (part != null)
+            {
+                Poly? poly = part.GetFirstActivePoly();
+                while (poly != null)
+                {
+                    keys[playingNotes] = (Bit8u)poly.GetKey();
+                    velocities[playingNotes] = (Bit8u)poly.GetVelocity();
+                    playingNotes++;
+                    poly = poly.GetNext();
+                }
+            }
+        }
+        return playingNotes;
+    }
+    
+    /// <summary>
+    /// Returns name of the patch set on the specified part.
+    /// </summary>
+    /// <param name="partNumber">Part number (0-7 for Part 1-8, or 8 for Rhythm)</param>
+    /// <returns>Patch name or null if not available</returns>
+    public string? GetPatchName(Bit8u partNumber)
+    {
+        if (!opened || partNumber > 8) return null;
+        
+        Part? part = parts[partNumber];
+        if (part == null) return null;
+        
+        return part.GetCurrentInstr();
+    }
+    
+    /// <summary>
+    /// Forces reverb model compatibility mode.
+    /// When mt32CompatibleMode is true, forces emulation of old MT-32 reverb circuit.
+    /// When false, emulation of the reverb circuit used in new generation of MT-32
+    /// compatible modules is enforced (CM-32L and LAPC-I).
+    /// </summary>
+    /// <param name="mt32CompatibleMode">True for MT-32 compatibility, false for CM-32L compatibility</param>
+    public void SetReverbCompatibilityMode(bool mt32CompatibleMode)
+    {
+        if (!opened || (IsMT32ReverbCompatibilityMode() == mt32CompatibleMode)) return;
+        
+        bool oldReverbEnabled = IsReverbEnabled();
+        SetReverbEnabled(false);
+        
+        for (int i = (int)ReverbMode.REVERB_MODE_ROOM; i <= (int)ReverbMode.REVERB_MODE_TAP_DELAY; i++)
+        {
+            reverbModels[i] = null; // Let GC handle cleanup
+        }
+        
+        InitReverbModels(mt32CompatibleMode);
+        SetReverbEnabled(oldReverbEnabled);
+        SetReverbOutputGain(reverbOutputGain);
+    }
+    
+    /// <summary>
+    /// If enabled, reverb buffers for all modes are kept allocated to avoid
+    /// memory allocating/freeing in the rendering thread.
+    /// Otherwise, reverb buffers that are not in use are freed to save memory.
+    /// </summary>
+    /// <param name="enabled">True to preallocate reverb memory</param>
+    public void PreallocateReverbMemory(bool enabled)
+    {
+        if (preallocatedReverbMemory == enabled) return;
+        preallocatedReverbMemory = enabled;
+        
+        if (!opened) return;
+        
+        for (int i = (int)ReverbMode.REVERB_MODE_ROOM; i <= (int)ReverbMode.REVERB_MODE_TAP_DELAY; i++)
+        {
+            if (reverbModels[i] != null)
+            {
+                if (enabled)
+                {
+                    reverbModels[i]!.Open();
+                }
+                else if (reverbModel != reverbModels[i])
+                {
+                    reverbModels[i]!.Close();
+                }
+            }
+        }
     }
     
     // ========== Advanced MIDI Methods (Stubs) ==========
@@ -1288,23 +1535,78 @@ public unsafe class Synth
     
     /// <summary>
     /// Writes SysEx data directly to memory regions.
+    /// This is a low-level method for advanced usage.
     /// </summary>
     /// <param name="channel">MIDI channel</param>
     /// <param name="sysex">SysEx data</param>
     public void WriteSysex(Bit8u channel, ReadOnlySpan<Bit8u> sysex)
     {
-        // TODO: Implement direct SysEx writing to memory regions
+        if (!opened || sysex.Length < 1) return;
+        
+        // Check for reset command (0x7F)
+        if (sysex[0] == 0x7F)
+        {
+            if (!IsDisplayOldMT32Compatible() && display != null)
+            {
+                display.MidiMessagePlayed();
+            }
+            // Would call reset() here in full implementation
+            return;
+        }
+        
+        if (display != null)
+        {
+            display.MidiMessagePlayed();
+        }
+        reportHandler?.OnMIDIMessagePlayed();
+        
+        if (sysex.Length < 3)
+        {
+            // Handle special short messages (e.g., display control)
+            if (sysex[0] == 0x20 && display != null)
+            {
+                display.DisplayControlMessageReceived(sysex, (Bit32u)sysex.Length);
+            }
+            PrintDebug($"writeSysex: Message is too short ({sysex.Length} bytes)!\n");
+            return;
+        }
+        
+        // Extract address from first 3 bytes
+        Bit32u addr = (Bit32u)((sysex[0] << 16) | (sysex[1] << 8) | sysex[2]);
+        ReadOnlySpan<Bit8u> data = sysex.Slice(3);
+        
+        // Full implementation would:
+        // 1. Find the appropriate memory region for this address
+        // 2. Write the data to that region
+        // 3. Trigger appropriate updates (e.g., timbre changes, system parameter updates)
+        // For now, this is a documented stub that validates inputs
+        PrintDebug($"writeSysex: Writing {data.Length} bytes to address 0x{addr:X6} (not fully implemented)\n");
     }
     
     /// <summary>
     /// Reads memory from the synthesizer.
+    /// This allows external code to retrieve the current state of the synth's memory.
     /// </summary>
-    /// <param name="addr">Memory address</param>
+    /// <param name="addr">Memory address to read from</param>
     /// <param name="len">Length to read</param>
     /// <param name="data">Buffer to receive data</param>
     public void ReadMemory(Bit32u addr, Bit32u len, Span<Bit8u> data)
     {
-        // TODO: Implement memory reading through memory regions
+        if (!opened || data.Length < len) return;
+        
+        // Full implementation would:
+        // 1. Find the appropriate memory region for this address
+        // 2. Read the data from that region
+        // 3. Handle special memory-mapped areas (e.g., system settings, patch data)
+        
+        // For now, zero out the buffer as a safe default
+        data.Slice(0, (int)len).Clear();
+        
+        // Future implementation would use memory regions similar to C++:
+        // MemoryRegion? region = FindMemoryRegion(addr);
+        // if (region != null) {
+        //     region.Read(addr, len, data);
+        // }
     }
     
     // ========== Render Methods (Stubs) ==========
