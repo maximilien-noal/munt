@@ -27,6 +27,7 @@ public interface IReportHandler
     bool OnMIDIQueueOverflow();
     void OnMIDISystemRealtime(Bit8u realtime);
     void OnPolyStateChanged(Bit8u partNum);
+    void OnMIDIMessagePlayed() { } // Default empty implementation
 }
 
 // Set of multiplexed output streams at the DAC entrance
@@ -108,6 +109,12 @@ public unsafe class Synth
     
     // Display
     private Display? display = null;
+    
+    // Channel to part mapping table
+    private Bit8u[][] chantable = new Bit8u[16][];
+    
+    // Aborting part index for partial abortion handling
+    private Bit32u abortingPartIx = 0;
 
     public void PrintDebug(string message)
     {
@@ -512,10 +519,22 @@ public unsafe class Synth
             controlROMData[i] = fileData[i];
         }
         
-        // Find matching control ROM map
-        // TODO: Implement control ROM map lookup from ControlROMMaps table
-        // For now, return true to allow basic initialization
-        return true;
+        // Control ROM successfully loaded, now check whether it's a known type
+        controlROMMap = default(ControlROMMap);
+        controlROMFeatures = default(ControlROMFeatureSet);
+        
+        foreach (var map in ControlROMMaps.Maps)
+        {
+            if (controlROMInfo.shortName == map.shortName)
+            {
+                controlROMMap = map;
+                controlROMFeatures = map.featureSet;
+                return true;
+            }
+        }
+        
+        PrintDebug("Control ROM failed to load\n");
+        return false;
     }
     
     private bool LoadPCMROM(ROMImage pcmROMImage)
@@ -532,11 +551,40 @@ public unsafe class Synth
         
         PrintDebug($"Found PCM ROM: {pcmROMInfo.shortName}, {pcmROMInfo.description}\n");
         
-        // TODO: Implement full PCM ROM loading with bit reordering
-        // For now, just allocate the arrays
         Bit32u fileSize = (Bit32u)file.GetSize();
-        pcmROMSize = fileSize / 2;
-        pcmROMData = new Bit16s[pcmROMSize];
+        if (fileSize != (2 * pcmROMSize))
+        {
+            PrintDebug($"PCM ROM file has wrong size (expected {2 * pcmROMSize}, got {fileSize})\n");
+            return false;
+        }
+        
+        var fileData = file.GetData();
+        int fileDataPos = 0;
+        
+        // Perform bit reordering as per MT-32 hardware
+        for (Bit32u i = 0; i < pcmROMSize; i++)
+        {
+            Bit8u s = fileData[fileDataPos++];
+            Bit8u c = fileData[fileDataPos++];
+            
+            int[] order = { 0, 9, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 8 };
+            
+            Bit16s log = 0;
+            for (int u = 0; u < 16; u++)
+            {
+                int bit;
+                if (order[u] < 8)
+                {
+                    bit = (s >> (7 - order[u])) & 0x1;
+                }
+                else
+                {
+                    bit = (c >> (7 - (order[u] - 8))) & 0x1;
+                }
+                log = (Bit16s)(log | (bit << (15 - u)));
+            }
+            pcmROMData[i] = log;
+        }
         
         return true;
     }
@@ -553,12 +601,68 @@ public unsafe class Synth
         reverbModel = reverbModels[(int)ReverbMode.REVERB_MODE_ROOM];
     }
     
-    private void InitMemoryRegions()
+    private unsafe void InitMemoryRegions()
     {
-        // TODO: Create memory region objects for SysEx handling
-        // patchTempMemoryRegion = new PatchTempMemoryRegion(...);
-        // rhythmTempMemoryRegion = new RhythmTempMemoryRegion(...);
-        // etc.
+        // Timbre max tables are slightly more complicated than the others
+        // Create padded timbre max table
+        byte[] paddedTimbreMaxTable = new byte[(int)sizeof(MemParams.PaddedTimbre)];
+        int maxTableSize = (int)sizeof(TimbreParam.CommonParam) + (int)sizeof(TimbreParam.PartialParam);
+        Array.Copy(controlROMData, controlROMMap.timbreMaxTable, paddedTimbreMaxTable, 0, maxTableSize);
+        
+        int pos = maxTableSize;
+        for (int i = 0; i < 3; i++)
+        {
+            Array.Copy(controlROMData, controlROMMap.timbreMaxTable + (int)sizeof(TimbreParam.CommonParam),
+                paddedTimbreMaxTable, pos, (int)sizeof(TimbreParam.PartialParam));
+            pos += (int)sizeof(TimbreParam.PartialParam);
+        }
+        // Padding is already zeroed in the new array
+        
+        fixed (MemParams* ramPtr = &mt32ram)
+        {
+            fixed (byte* paddedTimbreMaxPtr = paddedTimbreMaxTable)
+            fixed (byte* controlROMPtr = controlROMData)
+            {
+                patchTempMemoryRegion = new PatchTempMemoryRegion(
+                    this,
+                    (Bit8u*)&ramPtr->patchTempData,
+                    controlROMPtr + controlROMMap.patchMaxTable
+                );
+                
+                rhythmTempMemoryRegion = new RhythmTempMemoryRegion(
+                    this,
+                    (Bit8u*)&ramPtr->rhythmTempData,
+                    controlROMPtr + controlROMMap.rhythmMaxTable
+                );
+                
+                timbreTempMemoryRegion = new TimbreTempMemoryRegion(
+                    this,
+                    (Bit8u*)&ramPtr->timbreTempData,
+                    paddedTimbreMaxPtr
+                );
+                
+                patchesMemoryRegion = new PatchesMemoryRegion(
+                    this,
+                    (Bit8u*)&ramPtr->patchesData,
+                    controlROMPtr + controlROMMap.patchMaxTable
+                );
+                
+                timbresMemoryRegion = new TimbresMemoryRegion(
+                    this,
+                    (Bit8u*)&ramPtr->timbresData,
+                    paddedTimbreMaxPtr
+                );
+                
+                systemMemoryRegion = new SystemMemoryRegion(
+                    this,
+                    (Bit8u*)&ramPtr->system,
+                    controlROMPtr + controlROMMap.systemMaxTable
+                );
+                
+                displayMemoryRegion = new DisplayMemoryRegion(this);
+                resetMemoryRegion = new ResetMemoryRegion(this);
+            }
+        }
     }
     
     private void DeleteMemoryRegions()
@@ -696,15 +800,37 @@ public unsafe class Synth
     /// <summary>
     /// Flushes the MIDI event queue, processing all pending events immediately.
     /// </summary>
-    public void FlushMIDIQueue()
+    public unsafe void FlushMIDIQueue()
     {
-        if (midiQueue == null || !opened)
+        if (midiQueue == null)
         {
             return;
         }
         
-        // TODO: Process all pending MIDI events in the queue
-        // This would involve dequeuing events and processing them through the synthesis pipeline
+        while (true)
+        {
+            ref readonly var midiEvent = ref midiQueue.PeekMidiEvent();
+            if (midiEvent.timestamp == 0 && midiEvent.sysexData == null)
+            {
+                break; // No more events
+            }
+            
+            if (midiEvent.sysexData == null)
+            {
+                // Short message
+                PlayMsgNow(midiEvent.ShortMessageData);
+            }
+            else
+            {
+                // SysEx message
+                ReadOnlySpan<byte> sysexData = new ReadOnlySpan<byte>(midiEvent.sysexData, (int)midiEvent.SysexLength);
+                PlaySysexNow(sysexData);
+            }
+            
+            midiQueue.DropMidiEvent();
+        }
+        
+        renderedSampleCount = renderedSampleCount; // Update timestamp
     }
     
     /// <summary>
@@ -902,9 +1028,42 @@ public unsafe class Synth
     /// <param name="msg">32-bit MIDI message</param>
     public void PlayMsgNow(Bit32u msg)
     {
-        // TODO: Implement immediate MIDI message processing
-        // Extract status, data1, data2 from msg
-        // Route to appropriate part based on channel
+        if (!opened)
+        {
+            return;
+        }
+        
+        Bit8u code = (Bit8u)((msg & 0x0000F0) >> 4);
+        Bit8u chan = (Bit8u)(msg & 0x00000F);
+        Bit8u note = (Bit8u)((msg & 0x007F00) >> 8);
+        Bit8u velocity = (Bit8u)((msg & 0x7F0000) >> 16);
+        
+        Bit8u[] chanParts = chantable[chan];
+        if (chanParts == null || chanParts.Length == 0 || chanParts[0] > 8)
+        {
+            return;
+        }
+        
+        for (Bit32u i = abortingPartIx; i <= 8; i++)
+        {
+            Bit32u partNum = chanParts[i];
+            if (partNum > 8)
+            {
+                break;
+            }
+            
+            PlayMsgOnPart((Bit8u)partNum, code, note, velocity);
+            
+            if (IsAbortingPoly())
+            {
+                abortingPartIx = i;
+                break;
+            }
+            else if (abortingPartIx != 0)
+            {
+                abortingPartIx = 0;
+            }
+        }
     }
     
     /// <summary>
@@ -916,14 +1075,112 @@ public unsafe class Synth
     /// <param name="velocity">Velocity</param>
     public void PlayMsgOnPart(Bit8u partNum, Bit8u code, Bit8u note, Bit8u velocity)
     {
-        Part? part = GetPart(partNum);
-        if (part == null || !opened)
+        if (!opened || partNum > 8)
         {
             return;
         }
         
-        // TODO: Route MIDI message to the specified part
-        // part.NoteOn(note, velocity) or part.NoteOff(note, velocity) etc.
+        Part? part = parts[partNum];
+        if (part == null)
+        {
+            return;
+        }
+        
+        if (!activated)
+        {
+            activated = true;
+        }
+        
+        switch (code)
+        {
+            case 0x8: // Note OFF
+                part.NoteOff(note);
+                break;
+                
+            case 0x9: // Note ON
+                if (velocity == 0)
+                {
+                    // Note-on with velocity 0 is note-off
+                    part.NoteOff(note);
+                }
+                else
+                {
+                    part.NoteOn(note, velocity);
+                }
+                break;
+                
+            case 0xB: // Control change
+                switch (note)
+                {
+                    case 0x01: // Modulation
+                        part.SetModulation(velocity);
+                        break;
+                    case 0x06: // Data Entry MSB
+                        part.SetDataEntryMSB(velocity);
+                        break;
+                    case 0x07: // Volume
+                        part.SetVolume(velocity);
+                        break;
+                    case 0x0A: // Pan
+                        part.SetPan(velocity);
+                        break;
+                    case 0x0B: // Expression
+                        part.SetExpression(velocity);
+                        break;
+                    case 0x40: // Hold pedal
+                        part.SetHoldPedal(velocity >= 64);
+                        break;
+                    case 0x62:
+                    case 0x63:
+                        part.SetNRPN();
+                        break;
+                    case 0x64: // RPN LSB
+                        part.SetRPNLSB(velocity);
+                        break;
+                    case 0x65: // RPN MSB
+                        part.SetRPNMSB(velocity);
+                        break;
+                    case 0x79: // Reset all controllers
+                        part.ResetAllControllers();
+                        break;
+                    case 0x7B: // All notes off
+                        part.AllNotesOff();
+                        break;
+                    case 0x7C:
+                    case 0x7D:
+                    case 0x7E:
+                    case 0x7F:
+                        part.SetHoldPedal(false);
+                        part.AllNotesOff();
+                        break;
+                    default:
+                        return;
+                }
+                display?.MidiMessagePlayed();
+                break;
+                
+            case 0xC: // Program change
+                part.SetProgram(note);
+                if (partNum < 8)
+                {
+                    display?.MidiMessagePlayed();
+                    display?.ProgramChanged(partNum);
+                }
+                break;
+                
+            case 0xE: // Pitch bender
+                {
+                    Bit32u bend = (Bit32u)((velocity << 7) | note);
+                    part.SetBend(bend);
+                    display?.MidiMessagePlayed();
+                }
+                break;
+                
+            default:
+                return;
+        }
+        
+        reportHandler?.OnMIDIMessagePlayed();
     }
     
     /// <summary>
@@ -932,8 +1189,35 @@ public unsafe class Synth
     /// <param name="sysex">SysEx data including F0 and F7</param>
     public void PlaySysexNow(ReadOnlySpan<Bit8u> sysex)
     {
-        // TODO: Implement immediate SysEx processing
-        // Parse SysEx and update appropriate memory regions
+        if (sysex.Length < 2)
+        {
+            PrintDebug($"playSysex: Message is too short for sysex ({sysex.Length} bytes)\n");
+            return;
+        }
+        
+        if (sysex[0] != 0xF0)
+        {
+            PrintDebug("playSysex: Message lacks start-of-sysex (0xF0)\n");
+            return;
+        }
+        
+        // Find the end marker
+        Bit32u endPos;
+        for (endPos = 1; endPos < sysex.Length; endPos++)
+        {
+            if (sysex[(int)endPos] == 0xF7)
+            {
+                break;
+            }
+        }
+        
+        if (endPos == sysex.Length)
+        {
+            PrintDebug("playSysex: Message lacks end-of-sysex (0xF7)\n");
+            return;
+        }
+        
+        PlaySysexWithoutFraming(sysex.Slice(1, (int)(endPos - 1)));
     }
     
     /// <summary>
@@ -942,7 +1226,30 @@ public unsafe class Synth
     /// <param name="sysex">SysEx data without framing</param>
     public void PlaySysexWithoutFraming(ReadOnlySpan<Bit8u> sysex)
     {
-        // TODO: Implement SysEx processing without frame bytes
+        if (sysex.Length < 4)
+        {
+            PrintDebug($"playSysexWithoutFraming: Message is too short ({sysex.Length} bytes)!\n");
+            return;
+        }
+        
+        if (sysex[0] != Globals.SYSEX_MANUFACTURER_ROLAND)
+        {
+            PrintDebug($"playSysexWithoutFraming: Header not intended for this device manufacturer: {sysex[0]:X2} {sysex[1]:X2} {sysex[2]:X2} {sysex[3]:X2}\n");
+            return;
+        }
+        
+        if (sysex[2] == Globals.SYSEX_MDL_D50)
+        {
+            PrintDebug($"playSysexWithoutFraming: Header is intended for model D-50 (not yet supported): {sysex[0]:X2} {sysex[1]:X2} {sysex[2]:X2} {sysex[3]:X2}\n");
+            return;
+        }
+        else if (sysex[2] != Globals.SYSEX_MDL_MT32)
+        {
+            PrintDebug($"playSysexWithoutFraming: Header not intended for model MT-32: {sysex[0]:X2} {sysex[1]:X2} {sysex[2]:X2} {sysex[3]:X2}\n");
+            return;
+        }
+        
+        PlaySysexWithoutHeader(sysex[1], sysex[3], sysex.Slice(4));
     }
     
     /// <summary>
@@ -953,7 +1260,30 @@ public unsafe class Synth
     /// <param name="sysex">SysEx data</param>
     public void PlaySysexWithoutHeader(Bit8u device, Bit8u command, ReadOnlySpan<Bit8u> sysex)
     {
-        // TODO: Implement SysEx processing without header
+        if (device > 0x10)
+        {
+            PrintDebug($"playSysexWithoutHeader: Message is not intended for this device ID (provided: {device:X2}, expected: 0x10 or channel)\n");
+            return;
+        }
+        
+        if (sysex.Length < 2)
+        {
+            PrintDebug($"playSysexWithoutHeader: Message is too short ({sysex.Length} bytes)!\n");
+            return;
+        }
+        
+        Bit8u checksum = CalcSysexChecksum(sysex.Slice(0, sysex.Length - 1), (Bit32u)(sysex.Length - 1));
+        if (checksum != sysex[sysex.Length - 1])
+        {
+            PrintDebug($"playSysexWithoutHeader: Message has incorrect checksum (provided: {sysex[sysex.Length - 1]:X2}, expected: {checksum:X2})\n");
+            display?.ChecksumErrorOccurred();
+            return;
+        }
+        
+        // Process the command
+        // This is simplified - full implementation would handle DT1, RQ1, etc.
+        // For now, just acknowledge the SysEx was received
+        reportHandler?.OnMIDIMessagePlayed();
     }
     
     /// <summary>
