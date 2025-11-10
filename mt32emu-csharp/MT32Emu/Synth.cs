@@ -21,29 +21,81 @@ using Bit8u = System.Byte;
 using Bit16s = System.Int16;
 using Bit32u = System.UInt32;
 
-// Report handler interface for callbacks during MIDI processing
+/// <summary>
+/// Report handler interface for receiving callbacks during MIDI processing.
+/// Implement this interface to receive notifications about synthesizer events.
+/// </summary>
 public interface IReportHandler
 {
+    /// <summary>
+    /// Called when the MIDI queue overflows. Return true to abort playback.
+    /// </summary>
+    /// <returns>True to abort MIDI playback, false to continue.</returns>
     bool OnMIDIQueueOverflow();
+    
+    /// <summary>
+    /// Called when a MIDI system realtime message is received.
+    /// </summary>
+    /// <param name="realtime">The realtime message byte.</param>
     void OnMIDISystemRealtime(Bit8u realtime);
+    
+    /// <summary>
+    /// Called when the poly state changes for a part.
+    /// </summary>
+    /// <param name="partNum">The part number (0-8).</param>
     void OnPolyStateChanged(Bit8u partNum);
-    void OnMIDIMessagePlayed() { } // Default empty implementation
+    
+    /// <summary>
+    /// Called when a MIDI message has been played. Default implementation does nothing.
+    /// </summary>
+    void OnMIDIMessagePlayed() { }
 }
 
-// Set of multiplexed output streams at the DAC entrance
+/// <summary>
+/// Set of multiplexed output streams at the DAC entrance.
+/// Used for separated audio output streams (non-reverb and reverb wet/dry).
+/// </summary>
+/// <typeparam name="T">The sample type (typically short or float).</typeparam>
 public unsafe struct DACOutputStreams<T> where T : unmanaged
 {
+    /// <summary>Left channel non-reverb output.</summary>
     public T* nonReverbLeft;
+    /// <summary>Right channel non-reverb output.</summary>
     public T* nonReverbRight;
+    /// <summary>Left channel reverb dry signal.</summary>
     public T* reverbDryLeft;
+    /// <summary>Right channel reverb dry signal.</summary>
     public T* reverbDryRight;
+    /// <summary>Left channel reverb wet signal.</summary>
     public T* reverbWetLeft;
+    /// <summary>Right channel reverb wet signal.</summary>
     public T* reverbWetRight;
 }
 
-// Synth class - main synthesizer coordinator
-// NOTE: This is a partial implementation with core synthesis components complete.
-// Many high-level coordination methods are stubs that delegate to complete synthesis classes.
+/// <summary>
+/// Main synthesizer class that coordinates Roland MT-32, CM-32L, and LAPC-I emulation.
+/// This class provides the primary API for MIDI playback and audio rendering.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The Synth class is the main entry point for MT-32 emulation. It coordinates:
+/// - MIDI message processing and event queue management
+/// - ROM loading (Control ROM and PCM ROM)
+/// - Sound generation through partials and parts
+/// - Reverb processing
+/// - Analog output filtering
+/// - LCD display emulation
+/// </para>
+/// <para>
+/// Basic usage:
+/// 1. Create a Synth instance
+/// 2. Load ROMs using LoadControlROM() and LoadPCMROM()
+/// 3. Call Open() to initialize the synthesizer
+/// 4. Send MIDI messages using PlayMsg() or PlaySysex()
+/// 5. Render audio using Render() or RenderStreams()
+/// 6. Call Close() when done
+/// </para>
+/// </remarks>
 public unsafe class Synth
 {
     // Mapping from TVA phase to PartialState for external API
@@ -190,11 +242,22 @@ public unsafe class Synth
         return 1; // Everything else is 1 byte
     }
 
+    /// <summary>
+    /// Enqueues a MIDI short message for processing.
+    /// </summary>
+    /// <param name="message">MIDI short message (up to 3 bytes packed as uint).</param>
+    /// <returns>True if the message was successfully enqueued.</returns>
     public bool PlayMsg(Bit32u message)
     {
         return PlayMsg(message, renderedSampleCount);
     }
 
+    /// <summary>
+    /// Enqueues a MIDI short message for processing with a specific timestamp.
+    /// </summary>
+    /// <param name="message">MIDI short message (up to 3 bytes packed as uint).</param>
+    /// <param name="timestamp">Timestamp in sample frames.</param>
+    /// <returns>True if the message was successfully enqueued.</returns>
     public bool PlayMsg(Bit32u message, Bit32u timestamp)
     {
         // Handle system realtime messages
@@ -209,11 +272,22 @@ public unsafe class Synth
         return true;
     }
 
+    /// <summary>
+    /// Enqueues a MIDI System Exclusive message for processing.
+    /// </summary>
+    /// <param name="stream">SysEx message data (without F0 start and F7 end bytes).</param>
+    /// <returns>True if the message was successfully enqueued.</returns>
     public bool PlaySysex(ReadOnlySpan<Bit8u> stream)
     {
         return PlaySysex(stream, renderedSampleCount);
     }
 
+    /// <summary>
+    /// Enqueues a MIDI System Exclusive message for processing with a specific timestamp.
+    /// </summary>
+    /// <param name="stream">SysEx message data (without F0 start and F7 end bytes).</param>
+    /// <param name="timestamp">Timestamp in sample frames.</param>
+    /// <returns>True if the message was successfully enqueued.</returns>
     public bool PlaySysex(ReadOnlySpan<Bit8u> stream, Bit32u timestamp)
     {
         // SysEx acknowledged - parsing and memory region updates
@@ -240,6 +314,14 @@ public unsafe class Synth
         };
     }
 
+    /// <summary>
+    /// Renders synthesized audio as 16-bit signed integer samples (interleaved stereo).
+    /// </summary>
+    /// <param name="buffer">Output buffer for audio samples (stereo interleaved: L, R, L, R, ...).</param>
+    /// <remarks>
+    /// The buffer length should be even (stereo pairs). Sample rate depends on the analog output mode.
+    /// Use GetStereoOutputSampleRate() to determine the output sample rate.
+    /// </remarks>
     public void Render(Span<Bit16s> buffer)
     {
         // Render audio samples into the buffer
@@ -251,6 +333,14 @@ public unsafe class Synth
         renderedSampleCount += (Bit32u)(buffer.Length / 2);
     }
 
+    /// <summary>
+    /// Renders synthesized audio as 32-bit floating point samples (interleaved stereo).
+    /// </summary>
+    /// <param name="buffer">Output buffer for audio samples (stereo interleaved: L, R, L, R, ...). Values range from -1.0 to 1.0.</param>
+    /// <remarks>
+    /// The buffer length should be even (stereo pairs). Sample rate depends on the analog output mode.
+    /// Use GetStereoOutputSampleRate() to determine the output sample rate.
+    /// </remarks>
     public void Render(Span<float> buffer)
     {
         // Render audio samples into the buffer (float version)
@@ -708,21 +798,37 @@ public unsafe class Synth
     
     // ========== Configuration Methods ==========
     
+    /// <summary>
+    /// Enables or disables reverb processing.
+    /// </summary>
+    /// <param name="enabled">True to enable reverb, false to disable.</param>
     public void SetReverbEnabled(bool enabled)
     {
         reverbEnabled = enabled;
     }
     
+    /// <summary>
+    /// Returns whether reverb is currently enabled.
+    /// </summary>
+    /// <returns>True if reverb is enabled.</returns>
     public bool IsReverbEnabled()
     {
         return reverbEnabled;
     }
     
+    /// <summary>
+    /// Sets whether the reverb configuration is overridden by the application (not controlled by MIDI).
+    /// </summary>
+    /// <param name="overridden">True to override reverb settings.</param>
     public void SetReverbOverridden(bool overridden)
     {
         reverbOverridden = overridden;
     }
     
+    /// <summary>
+    /// Returns whether reverb is overridden by the application.
+    /// </summary>
+    /// <returns>True if reverb is overridden.</returns>
     public bool IsReverbOverridden()
     {
         return reverbOverridden;
