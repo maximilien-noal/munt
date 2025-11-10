@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Extensions.Logging;
 using MT32Emu;
 
 namespace MT32EmuAvalonia.Services;
@@ -15,6 +16,7 @@ namespace MT32EmuAvalonia.Services;
 /// </summary>
 public class MT32PlayerService : IDisposable
 {
+    private readonly ILogger<MT32PlayerService> _logger = LoggingService.CreateLogger<MT32PlayerService>();
     private readonly AudioService _audioService;
     private Synth? _synth;
     private bool _isInitialized;
@@ -26,8 +28,10 @@ public class MT32PlayerService : IDisposable
     
     public MT32PlayerService(AudioService audioService)
     {
+        _logger.LogDebug("Constructor started");
         _audioService = audioService;
         _audioService.OnGenerateAudio += GenerateAudio;
+        _logger.LogInformation("Constructor completed, audio callback registered");
     }
 
     /// <summary>
@@ -46,21 +50,31 @@ public class MT32PlayerService : IDisposable
     /// </summary>
     public async System.Threading.Tasks.Task<bool> InitializeAsync()
     {
+        _logger.LogInformation("InitializeAsync started");
         try
         {
             // Try to load ROMs
+            _logger.LogDebug("Attempting to load ROMs");
             var (controlROM, pcmROM) = await ROMLoader.LoadROMs();
             
             if (controlROM == null || pcmROM == null)
             {
                 // ROMs not found locally, provide instructions
+                _logger.LogWarning("ROMs not found - Control: {ControlROMStatus}, PCM: {PCMROMStatus}",
+                    controlROM == null ? "NULL" : $"{controlROM.Length} bytes",
+                    pcmROM == null ? "NULL" : $"{pcmROM.Length} bytes");
                 Status = "ROMs required. " + ROMLoader.GetROMInstructions();
                 _isInitialized = false;
                 return false;
             }
 
+            _logger.LogInformation("ROMs loaded successfully - Control: {ControlROMSize} bytes, PCM: {PCMROMSize} bytes",
+                controlROM.Length, pcmROM.Length);
+
             // Create synth instance
+            _logger.LogDebug("Creating Synth instance");
             _synth = new Synth(null); // No report handler for now
+            _logger.LogInformation("Synth instance created");
             
             // Load ROMs
             // Note: The actual ROM loading in MT32Emu requires specific ROM file handling
@@ -68,13 +82,16 @@ public class MT32PlayerService : IDisposable
             // _synth.LoadControlROM(controlROM);
             // _synth.LoadPCMROM(pcmROM);
             // _synth.Open(_audioService.SampleRate);
+            _logger.LogDebug("Note: ROM loading into synth is currently commented out (placeholder)");
             
             _isInitialized = true;
             Status = "MT-32 emulator initialized with ROMs from archive.org";
+            _logger.LogInformation("InitializeAsync completed successfully");
             return true;
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "InitializeAsync failed");
             Status = $"Initialization failed: {ex.Message}";
             _isInitialized = false;
             return false;
@@ -94,19 +111,30 @@ public class MT32PlayerService : IDisposable
     /// </summary>
     public bool LoadMidiFile(byte[] midiData)
     {
+        _logger.LogDebug("LoadMidiFile started (data size: {DataSize} bytes)", midiData?.Length ?? 0);
         try
         {
+            if (midiData == null)
+            {
+                _logger.LogWarning("LoadMidiFile failed: midiData is null");
+                Status = "Failed to load MIDI: No data provided";
+                return false;
+            }
+            
             _midiEvents.Clear();
             _currentEventIndex = 0;
             _currentTick = 0;
             
+            _logger.LogDebug("Parsing MIDI file");
             ParseMidiFile(midiData);
             
             Status = $"MIDI file loaded: {_midiEvents.Count} events";
+            _logger.LogInformation("MIDI file loaded successfully: {EventCount} events", _midiEvents.Count);
             return true;
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "LoadMidiFile failed");
             Status = $"Failed to load MIDI: {ex.Message}";
             return false;
         }
@@ -117,16 +145,20 @@ public class MT32PlayerService : IDisposable
     /// </summary>
     public void Play()
     {
+        _logger.LogDebug("Play called (events: {EventCount})", _midiEvents.Count);
         if (_midiEvents.Count == 0)
         {
+            _logger.LogWarning("Cannot play: No MIDI file loaded");
             Status = "No MIDI file loaded";
             return;
         }
 
         _currentEventIndex = 0;
         _currentTick = 0;
+        _logger.LogInformation("Starting audio service");
         _audioService.Start();
         Status = "Playing";
+        _logger.LogInformation("Playback started");
     }
 
     /// <summary>
@@ -134,10 +166,12 @@ public class MT32PlayerService : IDisposable
     /// </summary>
     public void Stop()
     {
+        _logger.LogDebug("Stop called");
         _audioService.Stop();
         _currentEventIndex = 0;
         _currentTick = 0;
         Status = "Stopped";
+        _logger.LogInformation("Playback stopped");
     }
 
     private void GenerateAudio(float[] buffer, int sampleCount)
