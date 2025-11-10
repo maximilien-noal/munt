@@ -23,13 +23,14 @@ public partial class MainViewModel : ViewModelBase
         _audioService = new AudioService(sampleRate: 44100, bufferSize: 2048);
         _playerService = new MT32PlayerService(_audioService);
         
-        InitializePlayer();
+        // Initialize asynchronously
+        _ = InitializePlayerAsync();
     }
 
-    private void InitializePlayer()
+    private async System.Threading.Tasks.Task InitializePlayerAsync()
     {
-        // Initialize the MT-32 emulator
-        if (_playerService.Initialize())
+        // Initialize the MT-32 emulator with ROMs from archive.org
+        if (await _playerService.InitializeAsync())
         {
             // Load the embedded MIDI file
             if (_playerService.LoadMidiFile(MidiData.TestMidiFile))
