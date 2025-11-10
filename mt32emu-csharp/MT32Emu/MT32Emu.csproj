@@ -6,6 +6,50 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>MT32Emu</PackageId>
+    <Version>2.7.0</Version>
+    <Authors>Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Authors>
+    <Company>Munt Project</Company>
+    <Product>MT32Emu</Product>
+    <Description>C# port of the mt32emu library - a Roland MT-32, CM-32L and LAPC-I synthesiser emulator. This library provides high-fidelity emulation of the classic Roland MT-32 sound module, enabling .NET applications to play back MT-32 MIDI music with authentic sound reproduction.</Description>
+    <Copyright>Copyright (C) 2003-2025 Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Copyright>
+    <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/munt/munt</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/munt/munt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mt32;roland;midi;synthesizer;emulator;audio;music;retro;sound</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>C# port of mt32emu library with complete synthesis pipeline, MIDI processing, and ROM management.</PackageReleaseNotes>
+
+    <!-- Generate XML documentation file for IntelliSense -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <!-- Suppress warnings for missing XML comments on less critical APIs -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Debug Symbols Configuration -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedAllSources>true</EmbedAllSources>
+
+    <!-- Reproducible/Deterministic Builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include README in NuGet package -->
+    <None Include="../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- SourceLink support for source debugging -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
 
 </Project>
