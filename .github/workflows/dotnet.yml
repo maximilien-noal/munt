@@ -100,7 +100,7 @@ jobs:
         name: nuget-symbols
         path: nuget-packages/*.snupkg
         retention-days: 30
-      continue-on-error: true  # Symbol package creation might fail
+      continue-on-error: true  # Symbols are embedded in the main DLL, separate package not created
 
   publish:
     name: Publish to NuGet
@@ -131,7 +131,7 @@ jobs:
     
     - name: Publish symbols to NuGet.org
       run: dotnet nuget push ./nuget-packages/*.snupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-      continue-on-error: true
+      continue-on-error: true  # Symbols are embedded in the main DLL, separate package not created
 
   publish-github:
     name: Publish to GitHub Packages

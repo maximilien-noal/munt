@@ -32,8 +32,6 @@
     <!-- Debug Symbols Configuration -->
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedAllSources>true</EmbedAllSources>
 
     <!-- Reproducible/Deterministic Builds -->
