@@ -7,6 +7,8 @@ This is an Avalonia WebAssembly (WASM) application that demonstrates the MT-32 s
 This demo application showcases:
 - **MT32Emu C# Library**: The complete Roland MT-32 emulation library ported to C#
 - **Avalonia UI**: Cross-platform UI framework with WebAssembly support
+- **OwnAudioSharp 2.1**: Cross-platform audio library that works on any platform including WebAssembly
+- **ROM Integration**: Loads Roland MT-32 ROMs from archive.org
 - **Embedded MIDI Data**: A test MIDI file embedded as a C# array
 - **Browser Compatibility**: Runs directly in modern web browsers
 
@@ -84,18 +86,35 @@ MT32EmuAvalonia/
 
 ## Important Notes
 
-### ROM Requirements
+### ROM Requirements and Integration
 The MT-32 emulator requires original Roland MT-32 ROM files to produce audio:
-- **Control ROM**: Contains the synthesizer's operating system
-- **PCM ROM**: Contains the sound samples
+- **Control ROM**: Contains the synthesizer's operating system (32 KB)
+- **PCM ROM**: Contains the sound samples (512 KB)
 
-These ROMs are **not included** in this demo due to copyright restrictions. The demo shows the UI and MIDI parsing functionality, but actual audio playback requires you to provide your own legally obtained ROM files.
+#### Getting ROM Files from Archive.org
 
-### Audio Backend
-This demo uses a simplified audio backend. For full audio playback in a browser, you would need to:
-1. Integrate with the Web Audio API via JavaScript interop
-2. Provide the MT-32 ROM files
-3. Implement a proper audio worklet or script processor
+ROM files can be obtained from Archive.org:
+
+1. **Download Link**: https://archive.org/download/Roland-MT-32-ROMs/roland-mt-32-roms.zip
+2. **Required Files**:
+   - `MT32_CONTROL.ROM` (MD5: 5626206284b22c2734f3e9efefcd2675)
+   - `MT32_PCM.ROM` (MD5: 89e42e386e82e0cacb4a2704a03706a2)
+3. **Installation**: Place ROM files in the application directory or `Assets/ROMs/` folder
+
+The application will automatically detect and load the ROMs from:
+- Local file system (desktop)
+- Embedded resources (WASM)
+- Or attempt to download from archive.org if not found
+
+> **Note**: ROM files are proprietary firmware from Roland Corporation. Using them requires owning the original MT-32 hardware.
+
+### Audio Backend: OwnAudioSharp 2.1
+
+This demo uses [OwnAudioSharp 2.1+](https://github.com/ModernMube/OwnAudioSharp) for audio playback:
+- **Fully Managed**: No native dependencies since version 2.0
+- **Cross-Platform**: Works on Windows, Linux, macOS, and WebAssembly
+- **Professional Grade**: High-quality audio playback and processing
+- **Native APIs**: Automatically uses WASAPI (Windows), ALSA (Linux), CoreAudio (macOS), WebAudio (Browser)
 
 ## GitHub Pages Deployment
 

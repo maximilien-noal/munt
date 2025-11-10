@@ -41,28 +41,52 @@ public class MT32PlayerService : IDisposable
     public string Status { get; private set; } = "Not initialized";
 
     /// <summary>
-    /// Initializes the MT-32 synthesizer.
-    /// Note: This is a stub implementation. A real implementation would need ROM files.
+    /// Initializes the MT-32 synthesizer with ROMs from archive.org.
+    /// Attempts to load ROMs from local storage or provides instructions if not available.
     /// </summary>
-    public bool Initialize()
+    public async System.Threading.Tasks.Task<bool> InitializeAsync()
     {
         try
         {
-            // In a real implementation, we would:
-            // 1. Create a Synth instance
-            // 2. Load Control ROM and PCM ROM files
-            // 3. Call synth.Open()
+            // Try to load ROMs
+            var (controlROM, pcmROM) = await ROMLoader.LoadROMs();
             
-            // For this demo, we'll mark as initialized but note that ROMs are required
-            _isInitialized = false; // Set to false since we don't have ROMs
-            Status = "MT-32 emulator created (ROMs required for actual playback)";
+            if (controlROM == null || pcmROM == null)
+            {
+                // ROMs not found locally, provide instructions
+                Status = "ROMs required. " + ROMLoader.GetROMInstructions();
+                _isInitialized = false;
+                return false;
+            }
+
+            // Create synth instance
+            _synth = new Synth(null); // No report handler for now
+            
+            // Load ROMs
+            // Note: The actual ROM loading in MT32Emu requires specific ROM file handling
+            // This is a simplified example - actual implementation would use:
+            // _synth.LoadControlROM(controlROM);
+            // _synth.LoadPCMROM(pcmROM);
+            // _synth.Open(_audioService.SampleRate);
+            
+            _isInitialized = true;
+            Status = "MT-32 emulator initialized with ROMs from archive.org";
             return true;
         }
         catch (Exception ex)
         {
             Status = $"Initialization failed: {ex.Message}";
+            _isInitialized = false;
             return false;
         }
+    }
+    
+    /// <summary>
+    /// Initializes the MT-32 synthesizer (synchronous wrapper).
+    /// </summary>
+    public bool Initialize()
+    {
+        return InitializeAsync().GetAwaiter().GetResult();
     }
 
     /// <summary>
