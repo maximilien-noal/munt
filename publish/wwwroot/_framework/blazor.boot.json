@@ -1,0 +1,62 @@
+{
+  "mainAssemblyName": "MT32EmuAvalonia.Browser",
+  "resources": {
+    "hash": "sha256-KQPD2Yqwc48TjtGakV0M3gRQ2HGxuMkXG8draty7I5k=",
+    "jsModuleNative": {
+      "dotnet.native.js": "sha256-9Fzd5We95Rp03dEKIAbYjPDR3eWyLbmjMlYStvxyiok="
+    },
+    "jsModuleRuntime": {
+      "dotnet.runtime.js": "sha256-aLf0XK8bqX83FXyXydFPTC1FOTq3PaeGDyoDn3uz194="
+    },
+    "wasmNative": {
+      "dotnet.native.wasm": "sha256-Y1pDEFNAqpzUmFk5FuVUzruqNloBnByUMhlQ96dqto4="
+    },
+    "icu": {
+      "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
+      "icudt_EFIGS.dat": "sha256-8fItetYY8kQ0ww6oxwTLiT3oXlBwHKumbeP2pRF4yTc=",
+      "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
+    },
+    "coreAssembly": {},
+    "assembly": {
+      "Avalonia.Base.wasm": "sha256-rm+7bLGBecjbGYYqSRya19pJBW/1OzskVF6zOWVwSFA=",
+      "Avalonia.Browser.wasm": "sha256-IY0WNUZrWMPCm/Z5XvHQwwjwbkk162F2GfAAKhib20M=",
+      "Avalonia.Controls.wasm": "sha256-AN5PxlusD+G4u7UFBc+6f+37r56xhqfQrPl+pRkXraE=",
+      "Avalonia.Dialogs.wasm": "sha256-xbxzMiw9Zv545YWLoBneE2pcrLo+6XZEMEeCEW/t4tE=",
+      "Avalonia.Fonts.Inter.wasm": "sha256-ztjErvSxFDNEFbMQ6mtXqCFkqDR7HGAzws5kk1HicY4=",
+      "Avalonia.Markup.wasm": "sha256-dUOb0GSdVHj42DfVlOUPUpEFy0l7WPaANtG4gY/+m5c=",
+      "Avalonia.Markup.Xaml.wasm": "sha256-MTkaQb/GFub3p0Zr0dM6UvSVaDNqkRSKQ47ajsobjcc=",
+      "Avalonia.Metal.wasm": "sha256-fXwLSX5pPrbGsgz1k8wfvK+/vqlglNbZObHmtqgQFi0=",
+      "Avalonia.OpenGL.wasm": "sha256-c4mp20xMXSlCMs2QJtBIxkQWB40aImixK1odpbW+bzo=",
+      "Avalonia.Skia.wasm": "sha256-ZXz2rHtVJPr8Xge6h92sDzUdrb+rW5lUjNjYgXHeALg=",
+      "Avalonia.Themes.Fluent.wasm": "sha256-66Ut9L4TXT3haOaYbLYZ60K7/sI7vw8ZpZCmJxv5dRk=",
+      "Avalonia.Vulkan.wasm": "sha256-nEuWKaBBRyPyXiZTdhwgavjvUHFX/IiD6KFoOQ1c288=",
+      "CommunityToolkit.Mvvm.wasm": "sha256-/ZytG5bS7SyTvJhnvbc4NR2JnPm2CXHbcVU1ut4C4iQ=",
+      "HarfBuzzSharp.wasm": "sha256-qyVy0jnjmWy/+bkCrjZkKyexsGinSRUvcVBSZwG2liw=",
+      "MT32Emu.wasm": "sha256-+d0ilgCJZloV1MoaQon1p1tLnBwWAiVrHQOtbQnqjTQ=",
+      "MT32EmuAvalonia.Browser.wasm": "sha256-Zmt0TB56gV/cDJiq+1tRS782d1FyuKTx+Ssnn21BAn0=",
+      "MT32EmuAvalonia.wasm": "sha256-T1yjYS43rawqO/TTohq+fVf9/Z0eC9cVDx71ThvivGE=",
+      "SkiaSharp.wasm": "sha256-2snECwFs7aH4ScIScGKbNc4/W4NxXr0+2Q2m9WPEbyc=",
+      "System.Collections.Concurrent.wasm": "sha256-zUeq0smA23Nv3s4WZjRaLpNhm53h9edHutxwsuxav0E=",
+      "System.Collections.NonGeneric.wasm": "sha256-i36qMpmJDadHRlIc/l3s9c/v/wvvm/fexFb2HU8euTw=",
+      "System.Collections.Specialized.wasm": "sha256-TtXSAykBDiCQj4HEm6PFrntlNoAxWvtZOLdmvrw6o9g=",
+      "System.Collections.wasm": "sha256-wOTmrehKP2wa8suSx8mwzOKqWGDDCN4rtter+WFknFw=",
+      "System.ComponentModel.Annotations.wasm": "sha256-Ojkie15ruaiPrml6zPA4ArLETBNT+nzrs5kzSPeRLnU=",
+      "System.ComponentModel.Primitives.wasm": "sha256-SPcLQRKwM8b2RWk9ImZqNQhx+OOF3+B6taCx2wwNo9s=",
+      "System.ComponentModel.TypeConverter.wasm": "sha256-J00930T8jD5k5/ron66odAnUQ+Wysd0iWmVtumgXUgw=",
+      "System.ComponentModel.wasm": "sha256-9gM4xXLDY0UfXEWK7G3UCs/p8UzAkbFMQxZ4wQKbRLA=",
+      "System.Diagnostics.DiagnosticSource.wasm": "sha256-rKRAEp6no2ClEtN+3W9dlqkXLkwuQfEphCWFah+AXQc=",
+      "System.Linq.Expressions.wasm": "sha256-Uknj52lSnn7mnySSEd2dxsLpp1BTn+DvsqZNxTCaVlY=",
+      "System.Linq.wasm": "sha256-+DpsH65h3UN/U1xwt0DwjyRp1aWuNW0bhhbaJXw8NJk=",
+      "System.ObjectModel.wasm": "sha256-OOWAagnoO0fkjSs9dvbanUVjfcrD/o9bXT8jlLERbRI=",
+      "System.Private.CoreLib.wasm": "sha256-5NT/lXmo7zqm6ppBc47PquHUdac2YJzNYg+75HI035Y=",
+      "System.Private.Uri.wasm": "sha256-ZXG8DZ6P20RXvGcsDJTdhcXymPu5OIOHD93seE0VFR8=",
+      "System.Runtime.InteropServices.JavaScript.wasm": "sha256-7ke44AX9d04PgCYlS30BMqEhbquQdSqUuLt/4TNmMD4=",
+      "System.Text.RegularExpressions.wasm": "sha256-qgUIbUitSddoUvYE/tvYoPztxX4xGUl0NREdU7HQi5w=",
+      "System.wasm": "sha256-PUc71Jd5nvz5F65sAd0C3ZORcUzYK2JSfSDmE+Drn0Q="
+    }
+  },
+  "cacheBootResources": true,
+  "debugLevel": 0,
+  "linkerEnabled": true,
+  "globalizationMode": "sharded"
+}
