@@ -6,7 +6,14 @@ This document describes the verbose logging feature that has been added to the M
 
 ## What Was Added
 
-Comprehensive console logging has been added throughout the entire application initialization and runtime flow. This allows developers and users to see exactly what's happening at each stage of the application lifecycle.
+The application now uses **Serilog** with **Microsoft.Extensions.Logging.ILogger** for professional, structured logging throughout the entire application. Key features include:
+
+- **Structured Logging**: Parameters are properly typed and indexed
+- **Browser Console Sink**: Logs automatically route to browser console for WASM
+- **Log Levels**: Information, Debug, Warning, Error
+- **Source Context**: Each log includes the component that generated it
+- **Timestamps**: All logs include precise timing information
+- **Exception Handling**: Full exception details with context
 
 ## How to Use
 
@@ -20,54 +27,52 @@ Comprehensive console logging has been added throughout the entire application i
    - Or right-click → "Inspect" → "Console" tab
 
 3. **View Initialization Logs**
-   - You should see logs starting with `[Program]`, `[App]`, `[MainViewModel]`, etc.
-   - These logs will show the complete initialization sequence
-   - Any errors or issues will be clearly logged with stack traces
+   - Logs include timestamps, log levels, source context, and messages
+   - Complete initialization sequence is logged
+   - Exceptions include full stack traces with context
 
 4. **Example Output**
    ```
-   [Program] Browser application starting
-   [Program] Args count: 0
-   [Program] BuildAvaloniaApp called
-   [Program] StartBrowserAppAsync called
-   [App] Initialize started
-   [App] Initialize completed
-   [App] OnFrameworkInitializationCompleted started
-   [App] ApplicationLifetime type: SingleViewApplicationLifetime
-   [App] Running in SingleView mode (Browser/Mobile)
-   [App] Creating MainView and MainViewModel
-   [MainViewModel] Constructor started
-   [MainViewModel] Creating AudioService (sampleRate: 44100, bufferSize: 2048)
-   [AudioService] Constructor started (sampleRate: 44100, bufferSize: 2048)
-   [AudioService] Constructor completed
-   [MainViewModel] AudioService created successfully
-   [MainViewModel] Creating MT32PlayerService
-   [MT32PlayerService] Constructor started
-   [MT32PlayerService] Constructor completed, audio callback registered
-   [MainViewModel] MT32PlayerService created successfully
-   [MainViewModel] Starting async initialization
-   [App] MainView created and assigned
-   [App] Calling base.OnFrameworkInitializationCompleted
-   [App] OnFrameworkInitializationCompleted completed
-   [MainViewModel] InitializePlayerAsync started
-   [MainViewModel] Calling MT32PlayerService.InitializeAsync
-   [MT32PlayerService] InitializeAsync started
-   [MT32PlayerService] Attempting to load ROMs
-   [ROMLoader] LoadROMs started
-   [ROMLoader] Looking for Control ROM at: MT32_CONTROL.ROM
-   [ROMLoader] Looking for PCM ROM at: MT32_PCM.ROM
-   [ROMLoader] Current directory: /
-   [ROMLoader] Checking if Control ROM exists: MT32_CONTROL.ROM
-   [ROMLoader] Control ROM file not found at: MT32_CONTROL.ROM
-   [ROMLoader] Checking if PCM ROM exists: MT32_PCM.ROM
-   [ROMLoader] PCM ROM file not found at: MT32_PCM.ROM
-   [ROMLoader] LoadROMs completed - Control: MISSING, PCM: MISSING
-   [MT32PlayerService] ROMs not found
-   [MT32PlayerService] Control ROM: NULL
-   [MT32PlayerService] PCM ROM: NULL
-   [MT32PlayerService] InitializeAsync completed successfully
-   [MainViewModel] MT32PlayerService initialization failed: ROMs required. To use this MT-32 emulator...
-   [MainViewModel] InitializePlayerAsync completed. Final status: ROMs required. To use this MT-32 emulator...
+   [19:50:00 INF] Program: Browser application starting
+   [19:50:00 DBG] Program: Args count: 0
+   [19:50:00 DBG] Program: BuildAvaloniaApp called
+   [19:50:00 INF] Program: StartBrowserAppAsync called
+   [19:50:01 INF] App: Initialize started
+   [19:50:01 INF] App: Initialize completed
+   [19:50:01 INF] App: OnFrameworkInitializationCompleted started
+   [19:50:01 DBG] App: ApplicationLifetime type: SingleViewApplicationLifetime
+   [19:50:01 INF] App: Running in SingleView mode (Browser/Mobile)
+   [19:50:01 DBG] App: Creating MainView and MainViewModel
+   [19:50:01 INF] MainViewModel: Constructor started
+   [19:50:01 DBG] MainViewModel: Creating AudioService (sampleRate: 44100, bufferSize: 2048)
+   [19:50:01 DBG] AudioService: Constructor started (sampleRate: 44100, bufferSize: 2048)
+   [19:50:01 INF] AudioService: Constructor completed
+   [19:50:01 INF] MainViewModel: AudioService created successfully
+   [19:50:01 DBG] MainViewModel: Creating MT32PlayerService
+   [19:50:01 DBG] MT32PlayerService: Constructor started
+   [19:50:01 INF] MT32PlayerService: Constructor completed, audio callback registered
+   [19:50:01 INF] MainViewModel: MT32PlayerService created successfully
+   [19:50:01 DBG] MainViewModel: Starting async initialization
+   [19:50:01 INF] App: MainView created and assigned
+   [19:50:01 DBG] App: Calling base.OnFrameworkInitializationCompleted
+   [19:50:01 INF] App: OnFrameworkInitializationCompleted completed
+   [19:50:01 INF] MainViewModel: InitializePlayerAsync started
+   [19:50:01 DBG] MainViewModel: Calling MT32PlayerService.InitializeAsync
+   [19:50:01 INF] MT32PlayerService: InitializeAsync started
+   [19:50:01 DBG] MT32PlayerService: Attempting to load ROMs
+   [19:50:01 INF] ROMLoader: LoadROMs started
+   [19:50:01 DBG] ROMLoader: Looking for Control ROM at: MT32_CONTROL.ROM
+   [19:50:01 DBG] ROMLoader: Looking for PCM ROM at: MT32_PCM.ROM
+   [19:50:01 DBG] ROMLoader: Current directory: /
+   [19:50:01 DBG] ROMLoader: Checking if Control ROM exists: MT32_CONTROL.ROM
+   [19:50:01 DBG] ROMLoader: Control ROM file not found at: MT32_CONTROL.ROM
+   [19:50:01 DBG] ROMLoader: Checking if PCM ROM exists: MT32_PCM.ROM
+   [19:50:01 DBG] ROMLoader: PCM ROM file not found at: MT32_PCM.ROM
+   [19:50:01 INF] ROMLoader: LoadROMs completed - Control: MISSING, PCM: MISSING
+   [19:50:01 WRN] MT32PlayerService: ROMs not found - Control: NULL, PCM: NULL
+   [19:50:01 INF] MT32PlayerService: InitializeAsync completed successfully
+   [19:50:01 WRN] MainViewModel: MT32PlayerService initialization failed: ROMs required...
+   [19:50:01 INF] MainViewModel: InitializePlayerAsync completed. Final status: ROMs required...
    ```
 
 ### For Desktop Applications
@@ -82,15 +87,26 @@ Comprehensive console logging has been added throughout the entire application i
    - All logs will be printed directly to the terminal
    - Same format and detail level as browser console
 
-## Log Categories
+## Log Levels and Components
 
-The logging system uses prefixed categories to identify which component generated each log:
+### Log Levels (Serilog)
 
-- `[Program]` - Application entry point
-- `[App]` - Avalonia application initialization
-- `[MainViewModel]` - Main view model operations
-- `[MT32PlayerService]` - MT-32 player service operations
-- `[AudioService]` - Audio service lifecycle
+The logging system uses standard log levels:
+
+- **INF** (Information) - Important milestones and state changes
+- **DBG** (Debug) - Detailed diagnostic information  
+- **WRN** (Warning) - Non-critical issues (e.g., ROMs not found)
+- **ERR** (Error) - Exceptions and failures
+
+### Source Context (Components)
+
+Each log includes the component that generated it:
+
+- `Program` - Application entry point
+- `App` - Avalonia application initialization
+- `MainViewModel` - Main view model operations
+- `MT32PlayerService` - MT-32 player service operations
+- `AudioService` - Audio service lifecycle
 - `[ROMLoader]` - ROM file loading operations
 
 ## Understanding the Logs
@@ -99,27 +115,29 @@ The logging system uses prefixed categories to identify which component generate
 
 If initialization succeeds, you should see:
 ```
-[MainViewModel] InitializePlayerAsync completed. Final status: Ready to play! Click Play to start.
+[19:50:01 INF] MainViewModel: InitializePlayerAsync completed. Final status: Ready to play! Click Play to start.
 ```
 
 ### Failed Initialization (Missing ROMs)
 
 This is the most common scenario:
 ```
-[ROMLoader] Control ROM file not found at: MT32_CONTROL.ROM
-[ROMLoader] PCM ROM file not found at: MT32_PCM.ROM
-[MainViewModel] MT32PlayerService initialization failed: ROMs required...
+[19:50:01 DBG] ROMLoader: Control ROM file not found at: MT32_CONTROL.ROM
+[19:50:01 DBG] ROMLoader: PCM ROM file not found at: MT32_PCM.ROM
+[19:50:01 WRN] MT32PlayerService: ROMs not found - Control: NULL, PCM: NULL
+[19:50:01 WRN] MainViewModel: MT32PlayerService initialization failed: ROMs required...
 ```
 
 **This is expected** - the application requires MT-32 ROM files which are not included due to copyright restrictions.
 
 ### Exception Handling
 
-If an exception occurs, you'll see detailed information:
+If an exception occurs, Serilog logs the full exception with context:
 ```
-[MainViewModel] InitializePlayerAsync failed: ExceptionType: Error message
-[MainViewModel] Stack trace: at MT32EmuAvalonia...
-[MainViewModel] Inner exception: InnerExceptionType: Inner error message
+[19:50:01 ERR] MainViewModel: InitializePlayerAsync failed
+System.InvalidOperationException: Error message
+   at MT32EmuAvalonia.ViewModels.MainViewModel.InitializePlayerAsync() in ...
+   at ...
 ```
 
 ## Troubleshooting with Logs

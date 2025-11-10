@@ -6,7 +6,7 @@ This document provides instructions for debugging the MT-32 Avalonia WASM applic
 
 ## Verbose Logging
 
-As of the latest changes, the application now includes comprehensive console logging throughout the initialization and playback flow.
+The application uses **Serilog** with `ILogger` for structured, professional logging throughout the initialization and playback flow. Logs automatically route to the browser console (via `Serilog.Sinks.BrowserConsole`) or desktop console depending on the platform.
 
 ### What's Being Logged
 
@@ -53,15 +53,17 @@ When running the WASM version in a browser:
    - Safari: Enable Developer Menu in Preferences, then press `Cmd+Option+C`
 
 2. **Navigate to Console Tab**
-   - All `Console.WriteLine()` calls from C# will appear in the browser console
-   - Logs are prefixed with component names in square brackets (e.g., `[MainViewModel]`, `[ROMLoader]`)
+   - All logs from the application will appear in the browser console via Serilog's BrowserConsole sink
+   - Logs include timestamps, log levels (INF, DBG, WRN, ERR), and source context
 
 3. **Filter Logs** (Optional)
    - Use the filter box to search for specific components
+   - Filter by log level: `INF`, `DBG`, `WRN`, `ERR`
+   - Filter by component: `MainViewModel`, `ROMLoader`, `AudioService`, etc.
    - Examples:
-     - `[MainViewModel]` - View model activity
-     - `[ROMLoader]` - ROM loading operations
-     - `[AudioService]` - Audio service operations
+     - Search for `MainViewModel` - View model activity
+     - Search for `ROMLoader` - ROM loading operations
+     - Search for `ERR` - Errors only
 
 ### Viewing Logs in Desktop Version
 
@@ -79,42 +81,48 @@ When running the desktop version:
 
 ### Log Format
 
-All logs follow this format:
+All logs use Serilog's structured logging format:
 ```
-[ComponentName] Message with details
+[HH:mm:ss LEVEL] SourceContext: Message with {Parameters}
 ```
 
 Example logs you should see during normal initialization:
 ```
-[Program] Desktop application starting
-[Program] Args count: 0
-[Program] BuildAvaloniaApp called
-[App] Initialize started
-[App] Initialize completed
-[App] OnFrameworkInitializationCompleted started
-[App] ApplicationLifetime type: ClassicDesktopStyleApplicationLifetime
-[App] Running in Desktop mode
-[App] Creating MainWindow and MainViewModel
-[MainViewModel] Constructor started
-[MainViewModel] Creating AudioService (sampleRate: 44100, bufferSize: 2048)
-[AudioService] Constructor started (sampleRate: 44100, bufferSize: 44100)
-[AudioService] Constructor completed
-[MainViewModel] AudioService created successfully
-[MainViewModel] Creating MT32PlayerService
-[MT32PlayerService] Constructor started
-[MT32PlayerService] Constructor completed, audio callback registered
-[MainViewModel] MT32PlayerService created successfully
-[MainViewModel] Starting async initialization
-[App] MainWindow created and assigned
-[MainViewModel] InitializePlayerAsync started
-[MainViewModel] Calling MT32PlayerService.InitializeAsync
-[MT32PlayerService] InitializeAsync started
-[MT32PlayerService] Attempting to load ROMs
-[ROMLoader] LoadROMs started
-[ROMLoader] Looking for Control ROM at: MT32_CONTROL.ROM
-[ROMLoader] Looking for PCM ROM at: MT32_PCM.ROM
-[ROMLoader] Current directory: /path/to/app
+[19:50:00 INF] Program: Desktop application starting
+[19:50:00 DBG] Program: Args count: 0
+[19:50:00 DBG] Program: BuildAvaloniaApp called
+[19:50:01 INF] App: Initialize started
+[19:50:01 INF] App: Initialize completed
+[19:50:01 INF] App: OnFrameworkInitializationCompleted started
+[19:50:01 DBG] App: ApplicationLifetime type: ClassicDesktopStyleApplicationLifetime
+[19:50:01 INF] App: Running in Desktop mode
+[19:50:01 DBG] App: Creating MainWindow and MainViewModel
+[19:50:01 INF] MainViewModel: Constructor started
+[19:50:01 DBG] MainViewModel: Creating AudioService (sampleRate: 44100, bufferSize: 2048)
+[19:50:01 DBG] AudioService: Constructor started (sampleRate: 44100, bufferSize: 2048)
+[19:50:01 INF] AudioService: Constructor completed
+[19:50:01 INF] MainViewModel: AudioService created successfully
+[19:50:01 DBG] MainViewModel: Creating MT32PlayerService
+[19:50:01 DBG] MT32PlayerService: Constructor started
+[19:50:01 INF] MT32PlayerService: Constructor completed, audio callback registered
+[19:50:01 INF] MainViewModel: MT32PlayerService created successfully
+[19:50:01 DBG] MainViewModel: Starting async initialization
+[19:50:01 INF] App: MainWindow created and assigned
+[19:50:01 INF] MainViewModel: InitializePlayerAsync started
+[19:50:01 DBG] MainViewModel: Calling MT32PlayerService.InitializeAsync
+[19:50:01 INF] MT32PlayerService: InitializeAsync started
+[19:50:01 DBG] MT32PlayerService: Attempting to load ROMs
+[19:50:01 INF] ROMLoader: LoadROMs started
+[19:50:01 DBG] ROMLoader: Looking for Control ROM at: MT32_CONTROL.ROM
+[19:50:01 DBG] ROMLoader: Looking for PCM ROM at: MT32_PCM.ROM
+[19:50:01 DBG] ROMLoader: Current directory: /path/to/app
 ```
+
+**Log Levels:**
+- `INF` (Information) - Important milestones and state changes
+- `DBG` (Debug) - Detailed diagnostic information
+- `WRN` (Warning) - Non-critical issues (e.g., ROMs not found)
+- `ERR` (Error) - Exceptions and failures
 
 ## Common Issues and Solutions
 
@@ -128,13 +136,13 @@ Example logs you should see during normal initialization:
 1. Open browser console (F12)
 2. Look for the initialization sequence logs
 3. Check if you see:
-   - `[MainViewModel] InitializePlayerAsync started`
-   - `[MT32PlayerService] InitializeAsync started`
-   - `[ROMLoader] LoadROMs started`
+   - `[INF] MainViewModel: InitializePlayerAsync started`
+   - `[INF] MT32PlayerService: InitializeAsync started`
+   - `[INF] ROMLoader: LoadROMs started`
 
 **Common Causes:**
-- **ROM files not found**: Look for logs showing "Control ROM file not found" or "PCM ROM file not found"
-- **Async initialization hanging**: Check for any exception messages in the logs
+- **ROM files not found**: Look for `[DBG]` logs showing "Control ROM file not found" or `[WRN]` logs
+- **Async initialization hanging**: Check for any `[ERR]` messages in the logs
 - **JavaScript interop issues** (WASM only): May not see any logs at all if initialization fails before C# code runs
 
 **Solutions:**
@@ -159,10 +167,11 @@ Example logs you should see during normal initialization:
 - Status message indicates ROMs are required
 
 **Debugging:**
-1. Check the `[ROMLoader]` logs for:
+1. Check the `ROMLoader` logs for:
    - Current directory path
    - ROM file paths being checked
    - File existence check results
+2. Look for `[WRN]` level logs indicating missing ROMs
 
 **Solution:**
 - Place ROM files in the correct location as shown in the logs
