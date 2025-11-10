@@ -793,6 +793,30 @@ public unsafe class Synth
         return midiDelayMode;
     }
     
+    /// <summary>
+    /// Sets volume override on a specific part (v2.6+ feature).
+    /// </summary>
+    /// <param name="partNumber">Part number (0-7 for Part 1-8, or 8 for Rhythm)</param>
+    /// <param name="volumeOverride">Volume override value (0-100), or 255 to disable override</param>
+    public void SetPartVolumeOverride(Bit8u partNumber, Bit8u volumeOverride)
+    {
+        if (opened && partNumber < 9)
+        {
+            parts[partNumber]?.SetVolumeOverride(volumeOverride);
+        }
+    }
+    
+    /// <summary>
+    /// Returns the overridden volume previously set on a specific part (v2.6+ feature).
+    /// A value outside the range 0..100 means no override is currently in effect.
+    /// </summary>
+    /// <param name="partNumber">Part number (0-7 for Part 1-8, or 8 for Rhythm)</param>
+    /// <returns>Volume override value, or 255 if not set or part is invalid</returns>
+    public Bit8u GetPartVolumeOverride(Bit8u partNumber)
+    {
+        return (!opened || partNumber > 8) ? (Bit8u)255 : parts[partNumber]!.GetVolumeOverride();
+    }
+    
     // ========== Static Utility Methods ==========
     
     /// <summary>
@@ -1013,6 +1037,49 @@ public unsafe class Synth
     public bool IsDefaultDisplayOldMT32Compatible()
     {
         return controlROMFeatures.oldMT32DisplayFeatures;
+    }
+    
+    /// <summary>
+    /// Returns whether the MIDI MESSAGE LED is ON and fills the targetBuffer parameter (v2.6+ feature).
+    /// </summary>
+    /// <param name="targetBuffer">Buffer to receive the display state (must be at least 21 bytes)</param>
+    /// <param name="narrowLCD">If true, returns narrow LCD format</param>
+    /// <returns>True if the MIDI MESSAGE LED is ON, false otherwise</returns>
+    public bool GetDisplayState(Span<byte> targetBuffer, bool narrowLCD = false)
+    {
+        if (!opened)
+        {
+            // Fill with spaces and null terminator
+            targetBuffer.Slice(0, (int)Display.LCD_TEXT_SIZE).Fill((byte)' ');
+            targetBuffer[(int)Display.LCD_TEXT_SIZE] = 0;
+            return false;
+        }
+        return display!.GetDisplayState(targetBuffer, narrowLCD);
+    }
+    
+    /// <summary>
+    /// Resets the emulated LCD to the main mode (Master Volume) (v2.6+ feature).
+    /// This has the same effect as pressing the Master Volume button while the display shows some other message.
+    /// Useful for the new-gen devices as those require a special Display Reset SysEx to return to the main mode
+    /// e.g. from showing a custom display message or a checksum error.
+    /// </summary>
+    public void SetMainDisplayMode()
+    {
+        if (opened)
+        {
+            display?.SetMainDisplayMode();
+        }
+    }
+    
+    /// <summary>
+    /// Permits to select an arbitrary display emulation model that does not necessarily match
+    /// the actual behaviour implemented in the control ROM version being used (v2.6+ feature).
+    /// </summary>
+    /// <param name="oldMT32CompatibilityEnabled">If true, forces emulation of the old-gen MT-32 display features.
+    /// Otherwise, emulation of the new-gen devices is enforced (CM-32L and LAPC-I)</param>
+    public void SetDisplayCompatibility(bool oldMT32CompatibilityEnabled)
+    {
+        displayOldMT32Compatible = oldMT32CompatibilityEnabled;
     }
     
     /// <summary>
