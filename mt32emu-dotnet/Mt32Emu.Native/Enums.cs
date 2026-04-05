@@ -122,11 +122,11 @@ public enum Mt32EmuAnalogOutputMode
     /// </summary>
     DigitalOnly = 0,
     /// <summary>
-    /// Roles of the coarse emulation of analogue circuits. Fast, produces passable output.
+    /// Uses coarse emulation of analogue circuits. Fast, produces passable output.
     /// </summary>
     Coarse = 1,
     /// <summary>
-    /// Roles of more accurate emulation of analogue circuits. Slower but more accurate.
+    /// Uses more accurate emulation of analogue circuits. Slower but more accurate.
     /// </summary>
     Accurate = 2,
     /// <summary>
