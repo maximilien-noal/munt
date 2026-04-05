@@ -102,8 +102,62 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  pack-nuget:
+  test-dotnet:
     needs: build-native
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            lib: mt32emu.dll
+          - os: ubuntu-latest
+            rid: linux-x64
+            lib: libmt32emu.so
+          - os: ubuntu-24.04-arm
+            rid: linux-arm64
+            lib: libmt32emu.so
+          - os: macos-latest
+            rid: osx-arm64
+            lib: libmt32emu.dylib
+
+    runs-on: ${{ matrix.os }}
+    name: Test ${{ matrix.rid }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: native-artifact
+
+      - name: Place native library for tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_DIR="mt32emu-dotnet/Mt32Emu.Native"
+          dest="${PROJECT_DIR}/runtimes/${{ matrix.rid }}/native"
+          mkdir -p "$dest"
+          src=$(find native-artifact -name "${{ matrix.lib }}" -type f | head -1)
+          if [ -z "$src" ]; then
+            echo "::error::Native library not found"
+            exit 1
+          fi
+          cp "$src" "$dest/"
+          echo "Placed ${src} -> ${dest}/${{ matrix.lib }}"
+
+      - name: Run BDD tests
+        run: dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
+
+  pack-nuget:
+    needs: [build-native, test-dotnet]
     runs-on: ubuntu-latest
     name: Pack NuGet
 
