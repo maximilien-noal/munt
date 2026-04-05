@@ -1,9 +1,0 @@
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/mt32emu.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/package.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/package_source.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/edit_cache.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/rebuild_cache.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/list_install_components.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/install.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/install/local.dir
-/home/runner/work/munt/munt/build-linux-x64/CMakeFiles/install/strip.dir
