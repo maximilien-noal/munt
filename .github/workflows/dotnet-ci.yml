@@ -1,0 +1,181 @@
+name: .NET CI & NuGet Package
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+  pull_request:
+    branches:
+      - '**'
+      - '!master'
+  workflow_dispatch:
+
+jobs:
+  build-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows x86
+          - os: windows-latest
+            rid: win-x86
+            arch: Win32
+            lib: mt32emu.dll
+          # Windows x64
+          - os: windows-latest
+            rid: win-x64
+            arch: x64
+            lib: mt32emu.dll
+          # Windows arm64
+          - os: windows-latest
+            rid: win-arm64
+            arch: ARM64
+            lib: mt32emu.dll
+          # Linux x64
+          - os: ubuntu-latest
+            rid: linux-x64
+            lib: libmt32emu.so
+          # Linux arm64
+          - os: ubuntu-24.04-arm
+            rid: linux-arm64
+            lib: libmt32emu.so
+          # macOS x64 (cross-compiled on arm64 runner)
+          - os: macos-latest
+            rid: osx-x64
+            arch: x86_64
+            lib: libmt32emu.dylib
+          # macOS arm64
+          - os: macos-latest
+            rid: osx-arm64
+            arch: arm64
+            lib: libmt32emu.dylib
+
+    runs-on: ${{ matrix.os }}
+    name: Native ${{ matrix.rid }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: >
+          cmake -S mt32emu -B build
+          -A ${{ matrix.arch }}
+          -DCMAKE_BUILD_TYPE=Release
+          -Dlibmt32emu_SHARED=TRUE
+          -Dlibmt32emu_C_INTERFACE=TRUE
+
+      - name: Configure CMake (macOS cross-compile)
+        if: runner.os == 'macOS'
+        run: >
+          cmake -S mt32emu -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
+          -Dlibmt32emu_SHARED=TRUE
+          -Dlibmt32emu_C_INTERFACE=TRUE
+
+      - name: Configure CMake (Linux)
+        if: runner.os == 'Linux'
+        run: >
+          cmake -S mt32emu -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -Dlibmt32emu_SHARED=TRUE
+          -Dlibmt32emu_C_INTERFACE=TRUE
+
+      - name: Build native library
+        run: cmake --build build --config Release
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: |
+            build/Release/${{ matrix.lib }}
+            build/${{ matrix.lib }}
+          if-no-files-found: error
+          retention-days: 1
+
+  pack-nuget:
+    needs: build-native
+    runs-on: ubuntu-latest
+    name: Pack NuGet
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download all native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Arrange native libraries into runtime folders
+        run: |
+          set -euo pipefail
+          PROJECT_DIR="mt32emu-dotnet/Mt32Emu.Native"
+
+          declare -A RID_LIB=(
+            ["win-x86"]="mt32emu.dll"
+            ["win-x64"]="mt32emu.dll"
+            ["win-arm64"]="mt32emu.dll"
+            ["linux-x64"]="libmt32emu.so"
+            ["linux-arm64"]="libmt32emu.so"
+            ["osx-x64"]="libmt32emu.dylib"
+            ["osx-arm64"]="libmt32emu.dylib"
+          )
+
+          for rid in "${!RID_LIB[@]}"; do
+            lib="${RID_LIB[$rid]}"
+            dest="${PROJECT_DIR}/runtimes/${rid}/native"
+            mkdir -p "$dest"
+            # Find the library in the artifact (could be in build/ or build/Release/)
+            src=$(find "artifacts/native-${rid}" -name "$lib" -type f | head -1)
+            if [ -z "$src" ]; then
+              echo "::error::Native library not found for ${rid}"
+              exit 1
+            fi
+            cp "$src" "$dest/"
+            echo "Copied ${src} -> ${dest}/${lib}"
+          done
+
+      - name: Build and pack NuGet package
+        run: dotnet pack mt32emu-dotnet/Mt32Emu.Native/Mt32Emu.Native.csproj -c Release -o nupkg
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: nupkg/*.nupkg
+          if-no-files-found: error
+
+  publish-nuget:
+    needs: pack-nuget
+    runs-on: ubuntu-latest
+    name: Publish NuGet
+    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
+
+    steps:
+      - name: Download NuGet package
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-package
+          path: nupkg
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish to NuGet.org
+        if: env.NUGET_API_KEY != ''
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push nupkg/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Publish to GitHub Packages
+        run: dotnet nuget push nupkg/*.nupkg --api-key "${{ secrets.GITHUB_TOKEN }}" --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate

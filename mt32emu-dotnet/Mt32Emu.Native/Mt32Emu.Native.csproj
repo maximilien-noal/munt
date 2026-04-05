@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- NuGet package metadata -->
+    <PackageId>Mt32Emu.Native</PackageId>
+    <Version>2.8.0</Version>
+    <Authors>Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Authors>
+    <Description>Cross-platform .NET bindings for libmt32emu — a C/C++ library to emulate (approximately) the Roland MT-32, CM-32L and LAPC-I synthesiser modules. Ships pre-built native libraries for Windows (x86, x64, arm64), Linux (x64, arm64), and macOS (x64, arm64).</Description>
+    <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/maximilien-noal/munt</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/maximilien-noal/munt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mt32;midi;synthesizer;emulator;roland;cm32l;lapc-i;munt</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright (C) 2003-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <!-- Native library includes per RID -->
+  <ItemGroup>
+    <!-- Windows x86 -->
+    <None Include="runtimes/win-x86/native/mt32emu.dll" Pack="true" PackagePath="runtimes/win-x86/native/" Condition="Exists('runtimes/win-x86/native/mt32emu.dll')" />
+    <!-- Windows x64 -->
+    <None Include="runtimes/win-x64/native/mt32emu.dll" Pack="true" PackagePath="runtimes/win-x64/native/" Condition="Exists('runtimes/win-x64/native/mt32emu.dll')" />
+    <!-- Windows arm64 -->
+    <None Include="runtimes/win-arm64/native/mt32emu.dll" Pack="true" PackagePath="runtimes/win-arm64/native/" Condition="Exists('runtimes/win-arm64/native/mt32emu.dll')" />
+    <!-- Linux x64 -->
+    <None Include="runtimes/linux-x64/native/libmt32emu.so" Pack="true" PackagePath="runtimes/linux-x64/native/" Condition="Exists('runtimes/linux-x64/native/libmt32emu.so')" />
+    <!-- Linux arm64 -->
+    <None Include="runtimes/linux-arm64/native/libmt32emu.so" Pack="true" PackagePath="runtimes/linux-arm64/native/" Condition="Exists('runtimes/linux-arm64/native/libmt32emu.so')" />
+    <!-- macOS x64 -->
+    <None Include="runtimes/osx-x64/native/libmt32emu.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/" Condition="Exists('runtimes/osx-x64/native/libmt32emu.dylib')" />
+    <!-- macOS arm64 -->
+    <None Include="runtimes/osx-arm64/native/libmt32emu.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native/" Condition="Exists('runtimes/osx-arm64/native/libmt32emu.dylib')" />
+  </ItemGroup>
+
+</Project>

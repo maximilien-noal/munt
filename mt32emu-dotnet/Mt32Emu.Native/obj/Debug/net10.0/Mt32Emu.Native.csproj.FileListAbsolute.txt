@@ -1,0 +1,14 @@
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/bin/Debug/net10.0/Mt32Emu.Native.deps.json
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/bin/Debug/net10.0/Mt32Emu.Native.dll
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/bin/Debug/net10.0/Mt32Emu.Native.pdb
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/bin/Debug/net10.0/Mt32Emu.Native.xml
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.AssemblyInfoInputs.cache
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.AssemblyInfo.cs
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.csproj.CoreCompileInputs.cache
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.sourcelink.json
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.dll
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/refint/Mt32Emu.Native.dll
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.xml
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/Mt32Emu.Native.pdb
+/home/runner/work/munt/munt/mt32emu-dotnet/Mt32Emu.Native/obj/Debug/net10.0/ref/Mt32Emu.Native.dll
