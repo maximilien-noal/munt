@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <!-- NuGet package metadata -->
     <PackageId>Mt32Emu.Native</PackageId>
@@ -14,17 +15,37 @@
     <VersionPrefix>2.8.0</VersionPrefix>
     <Authors>Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Authors>
     <Description>Cross-platform .NET bindings for libmt32emu — a C/C++ library to emulate (approximately) the Roland MT-32, CM-32L and LAPC-I synthesiser modules. Ships pre-built native libraries for Windows (x86, x64, arm64), Linux (x64, arm64), and macOS (x64, arm64).</Description>
-    <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
+    <PackageLicenseFile>COPYING.LESSER.txt</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/maximilien-noal/munt</PackageProjectUrl>
     <RepositoryUrl>https://github.com/maximilien-noal/munt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>mt32;midi;synthesizer;emulator;roland;cm32l;lapc-i;munt</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Copyright>Copyright (C) 2003-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Copyright>
+
+    <!-- Reproducible builds -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+
+    <!-- Symbol package -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <!-- Reproducible / CI builds -->
+  <PropertyGroup Condition="'$(CI)' == 'true' or '$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- SourceLink -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\mt32emu\COPYING.LESSER.txt" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <!-- Native library includes per RID -->

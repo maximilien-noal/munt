@@ -71,6 +71,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -Dlibmt32emu_SHARED=TRUE
           -Dlibmt32emu_C_INTERFACE=TRUE
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
 
       - name: Configure CMake (macOS cross-compile)
         if: runner.os == 'macOS'
@@ -117,6 +118,9 @@ jobs:
           - os: ubuntu-24.04-arm
             rid: linux-arm64
             lib: libmt32emu.so
+          - os: macos-latest
+            rid: osx-x64
+            lib: libmt32emu.dylib
           - os: macos-latest
             rid: osx-arm64
             lib: libmt32emu.dylib
@@ -231,7 +235,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuget-package
-          path: nupkg/*.nupkg
+          path: |
+            nupkg/*.nupkg
+            nupkg/*.snupkg
           if-no-files-found: error
 
   publish-nuget:
