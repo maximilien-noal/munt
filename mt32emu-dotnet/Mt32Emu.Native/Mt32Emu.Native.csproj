@@ -1,0 +1,124 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- NuGet package metadata -->
+    <PackageId>Mt32Emu.Native</PackageId>
+    <!-- Version is set by CI from mt32emu/cmake/project_data.cmake and git tags.
+         The fallback below is used only for local builds. -->
+    <VersionPrefix>2.8.0</VersionPrefix>
+    <Authors>Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Authors>
+    <Description>Cross-platform .NET bindings for libmt32emu — a C/C++ library to emulate (approximately) the Roland MT-32, CM-32L and LAPC-I synthesiser modules. Ships pre-built native libraries for Windows (x86, x64, arm64), Linux (x64, arm64), and macOS (x64, arm64).</Description>
+    <PackageLicenseFile>COPYING.LESSER.txt</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/maximilien-noal/munt</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/maximilien-noal/munt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mt32;midi;synthesizer;emulator;roland;cm32l;lapc-i;munt</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright (C) 2003-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev</Copyright>
+
+    <!-- Reproducible builds -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+
+    <!-- Symbol package -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <!-- Reproducible / CI builds -->
+  <PropertyGroup Condition="'$(CI)' == 'true' or '$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- SourceLink -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\mt32emu\COPYING.LESSER.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <!--
+    Auto-build: when no pre-built native libraries exist in runtimes/,
+    invoke cmake to build the native library for the current platform.
+    In CI, native artifacts are pre-placed so this target is skipped.
+    Skip manually with: dotnet pack /p:SkipNativeBuild=true
+  -->
+  <Target Name="_BuildNativeLibrary"
+          Condition="'$(SkipNativeBuild)' != 'true'
+                     and !Exists('runtimes/win-x86/native/mt32emu.dll')
+                     and !Exists('runtimes/win-x64/native/mt32emu.dll')
+                     and !Exists('runtimes/win-arm64/native/mt32emu.dll')
+                     and !Exists('runtimes/linux-x64/native/libmt32emu.so')
+                     and !Exists('runtimes/linux-arm64/native/libmt32emu.so')
+                     and !Exists('runtimes/osx-x64/native/libmt32emu.dylib')
+                     and !Exists('runtimes/osx-arm64/native/libmt32emu.dylib')">
+    <PropertyGroup>
+      <_NativeSrc>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../mt32emu'))</_NativeSrc>
+      <_NativeBld>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build-dotnet'))</_NativeBld>
+      <_CmakeArgs>-DCMAKE_BUILD_TYPE=Release -Dlibmt32emu_SHARED=TRUE -Dlibmt32emu_C_INTERFACE=TRUE</_CmakeArgs>
+      <_CmakeArgs Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(_CmakeArgs) -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded</_CmakeArgs>
+
+      <!-- Detect current platform -->
+      <_ProcArch>$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)</_ProcArch>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('Linux'))   and '$(_ProcArch)' == 'X64'">linux-x64</_Rid>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('Linux'))   and '$(_ProcArch)' == 'Arm64'">linux-arm64</_Rid>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('OSX'))     and '$(_ProcArch)' == 'X64'">osx-x64</_Rid>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('OSX'))     and '$(_ProcArch)' == 'Arm64'">osx-arm64</_Rid>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_ProcArch)' == 'X64'">win-x64</_Rid>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_ProcArch)' == 'X86'">win-x86</_Rid>
+      <_Rid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_ProcArch)' == 'Arm64'">win-arm64</_Rid>
+
+      <_LibName Condition="$([MSBuild]::IsOSPlatform('Linux'))">libmt32emu.so</_LibName>
+      <_LibName Condition="$([MSBuild]::IsOSPlatform('OSX'))">libmt32emu.dylib</_LibName>
+      <_LibName Condition="$([MSBuild]::IsOSPlatform('Windows'))">mt32emu.dll</_LibName>
+
+      <!-- cmake output path differs: build/ on Unix, build/Release/ on Windows MSVC -->
+      <_BuiltLib Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(_NativeBld)/$(_LibName)</_BuiltLib>
+      <_BuiltLib Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(_NativeBld)/Release/$(_LibName)</_BuiltLib>
+
+      <_DestDir>runtimes/$(_Rid)/native</_DestDir>
+    </PropertyGroup>
+
+    <Error Condition="'$(_Rid)' == ''"
+           Text="Unsupported platform or architecture for native build. Detected ProcessArchitecture='$(_ProcArch)'. Supported targets are: win-x86, win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64." />
+
+    <Message Text="No native libraries found in runtimes/. Building for $(_Rid) via cmake..." Importance="high" />
+    <Exec Command="cmake -S &quot;$(_NativeSrc)&quot; -B &quot;$(_NativeBld)&quot; $(_CmakeArgs)" />
+    <Exec Command="cmake --build &quot;$(_NativeBld)&quot; --config Release" />
+    <MakeDir Directories="$(_DestDir)" />
+    <Copy SourceFiles="$(_BuiltLib)" DestinationFolder="$(_DestDir)" />
+    <Message Text="Placed $(_LibName) in $(_DestDir)/" Importance="high" />
+  </Target>
+
+  <!--
+    Dynamically discover and include all native libraries from runtimes/.
+    Runs after _BuildNativeLibrary (to pick up freshly-built libs) and after
+    _GetPackageFiles (so we can add directly to _PackageFiles which is what
+    GenerateNuspec reads).
+  -->
+  <Target Name="_IncludeNativeLibraries" BeforeTargets="GenerateNuspec"
+          DependsOnTargets="_BuildNativeLibrary;_GetPackageFiles">
+    <ItemGroup>
+      <_NativeLibFiles Include="runtimes/**/*" />
+      <_PackageFiles Include="@(_NativeLibFiles)">
+        <PackagePath>runtimes/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+        <BuildAction>None</BuildAction>
+      </_PackageFiles>
+    </ItemGroup>
+    <Error Condition="'@(_NativeLibFiles)' == ''"
+           Text="No native libraries found in runtimes/. Either build natively with cmake, place pre-built libraries in runtimes/{rid}/native/, or ensure cmake is installed for auto-build." />
+    <Message Text="Including native libraries: @(_NativeLibFiles)" Importance="high" />
+  </Target>
+
+</Project>
