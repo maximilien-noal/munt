@@ -90,9 +90,12 @@
       <_DestDir>runtimes/$(_Rid)/native</_DestDir>
     </PropertyGroup>
 
+    <Error Condition="'$(_Rid)' == ''"
+           Text="Unsupported platform or architecture for native build. Detected ProcessArchitecture='$(_ProcArch)'. Supported targets are: win-x86, win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64." />
+
     <Message Text="No native libraries found in runtimes/. Building for $(_Rid) via cmake..." Importance="high" />
-    <Exec Command="cmake -S $(_NativeSrc) -B $(_NativeBld) $(_CmakeArgs)" />
-    <Exec Command="cmake --build $(_NativeBld) --config Release" />
+    <Exec Command="cmake -S &quot;$(_NativeSrc)&quot; -B &quot;$(_NativeBld)&quot; $(_CmakeArgs)" />
+    <Exec Command="cmake --build &quot;$(_NativeBld)&quot; --config Release" />
     <MakeDir Directories="$(_DestDir)" />
     <Copy SourceFiles="$(_BuiltLib)" DestinationFolder="$(_DestDir)" />
     <Message Text="Placed $(_LibName) in $(_DestDir)/" Importance="high" />

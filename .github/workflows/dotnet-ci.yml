@@ -158,7 +158,13 @@ jobs:
           echo "Placed ${src} -> ${dest}/${{ matrix.lib }}"
 
       - name: Run BDD tests
-        run: dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
+        shell: bash
+        run: |
+          if [ "${{ matrix.rid }}" = "osx-x64" ]; then
+            arch -x86_64 dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
+          else
+            dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
+          fi
 
   pack-nuget:
     needs: [build-native, test-dotnet]
@@ -244,7 +250,11 @@ jobs:
     needs: pack-nuget
     runs-on: ubuntu-latest
     name: Publish NuGet
-    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    permissions:
+      id-token: write
+      packages: write
 
     steps:
       - name: Download NuGet package
@@ -258,16 +268,13 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Publish to NuGet.org (release tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          if [ -n "${NUGET_API_KEY}" ]; then
-            dotnet nuget push nupkg/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
-          else
-            echo "::warning::NUGET_API_KEY secret is not set, skipping NuGet.org publish"
-          fi
+      - name: NuGet login (trusted publishing via OIDC)
+        uses: nuget/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Publish to NuGet.org
+        run: dotnet nuget push nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Publish to GitHub Packages
         run: dotnet nuget push nupkg/*.nupkg --api-key "${{ secrets.GITHUB_TOKEN }}" --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate

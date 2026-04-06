@@ -14,6 +14,7 @@
 //  You should have received a copy of the GNU Lesser General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Mt32Emu.Native;
@@ -50,6 +51,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <returns>The supported report handler version.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_supported_report_handler_version")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReportHandlerVersion GetSupportedReportHandlerVersion();
 
     /// <summary>
@@ -58,6 +60,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <returns>The supported MIDI receiver version.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_supported_midi_receiver_version")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuMidiReceiverVersion GetSupportedMidiReceiverVersion();
 
     // --- Utility ---
@@ -68,6 +71,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <returns>The library version encoded as a 32-bit unsigned integer.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_library_version_int")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetLibraryVersionInt();
 
     /// <summary>
@@ -75,6 +79,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <returns>A pointer to a null-terminated string containing the version.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_library_version_string")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial nint GetLibraryVersionStringPtr();
 
     /// <summary>
@@ -95,6 +100,7 @@ public static partial class Mt32EmuNative
     /// <returns>The output sample rate in Hz for the specified mode.</returns>
     /// <seealso cref="Mt32EmuAnalogOutputMode"/>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_stereo_output_samplerate")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetStereoOutputSamplerate(Mt32EmuAnalogOutputMode analogOutputMode);
 
     /// <summary>
@@ -104,6 +110,7 @@ public static partial class Mt32EmuNative
     /// <param name="targetSamplerate">The desired output sample rate.</param>
     /// <returns>The best analog output mode for the specified sample rate.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_best_analog_output_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuAnalogOutputMode GetBestAnalogOutputMode(double targetSamplerate);
 
     // --- ROM handling (context-independent) ---
@@ -120,6 +127,7 @@ public static partial class Mt32EmuNative
     /// returns the required array size.
     /// </returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_machine_ids")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial nuint GetMachineIds(nint machineIds, nuint machineIdsSize);
 
     /// <summary>
@@ -136,6 +144,7 @@ public static partial class Mt32EmuNative
     /// The number of ROM identifiers available. Returns 0 if <paramref name="machineId"/> is unrecognised.
     /// </returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_rom_ids")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial nuint GetRomIds(nint romIds, nuint romIdsSize, nint machineId);
 
     /// <summary>
@@ -147,6 +156,7 @@ public static partial class Mt32EmuNative
     /// <param name="machineId">Optional machine identifier. Pass <see cref="nint.Zero"/> for any machine.</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success or a negative error code.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_identify_rom_data")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode IdentifyRomData(ref Mt32EmuRomInfo romInfo, nint data, nuint dataSize, nint machineId);
 
     /// <summary>
@@ -157,6 +167,7 @@ public static partial class Mt32EmuNative
     /// <param name="machineId">Optional machine identifier. Pass <see cref="nint.Zero"/> for any machine.</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success or a negative error code.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_identify_rom_file", StringMarshalling = StringMarshalling.Utf8)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode IdentifyRomFile(ref Mt32EmuRomInfo romInfo, string filename, nint machineId);
 
     // ============================================================
@@ -172,6 +183,7 @@ public static partial class Mt32EmuNative
     /// <param name="instanceData">User-supplied instance data pointer passed to report handler callbacks.</param>
     /// <returns>An opaque handle to the newly created emulation context.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_create_context")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial nint CreateContext(Mt32EmuReportHandlerI reportHandler, nint instanceData);
 
     /// <summary>
@@ -179,6 +191,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <param name="context">The emulation context to destroy.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_free_context")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void FreeContext(nint context);
 
     /// <summary>
@@ -200,6 +213,7 @@ public static partial class Mt32EmuNative
     /// Newly added ROM will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_add_rom_data")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode AddRomData(nint context, nint data, nuint dataSize, nint sha1Digest);
 
     /// <summary>
@@ -214,6 +228,7 @@ public static partial class Mt32EmuNative
     /// Newly added ROM will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_add_rom_file", StringMarshalling = StringMarshalling.Utf8)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode AddRomFile(nint context, string filename);
 
     /// <summary>
@@ -233,6 +248,7 @@ public static partial class Mt32EmuNative
     /// Newly added ROM will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_merge_and_add_rom_data")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode MergeAndAddRomData(nint context, nint part1Data, nuint part1DataSize, nint part1Sha1Digest, nint part2Data, nuint part2DataSize, nint part2Sha1Digest);
 
     /// <summary>
@@ -248,6 +264,7 @@ public static partial class Mt32EmuNative
     /// Newly added ROM will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_merge_and_add_rom_files", StringMarshalling = StringMarshalling.Utf8)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode MergeAndAddRomFiles(nint context, string part1Filename, string part2Filename);
 
     /// <summary>
@@ -268,6 +285,7 @@ public static partial class Mt32EmuNative
     /// Newly added ROMs will take effect upon the next call to <see cref="OpenSynth"/>.</para>
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_add_machine_rom_file", StringMarshalling = StringMarshalling.Utf8)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode AddMachineRomFile(nint context, string machineId, string filename);
 
     /// <summary>
@@ -277,6 +295,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="romInfo">A <see cref="Mt32EmuRomInfo"/> structure to be filled. Unloaded ROM fields are set to <see cref="nint.Zero"/>.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_rom_info")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void GetRomInfo(nint context, ref Mt32EmuRomInfo romInfo);
 
     /// <summary>
@@ -289,6 +308,7 @@ public static partial class Mt32EmuNative
     /// The new value will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_partial_count")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetPartialCount(nint context, uint partialCount);
 
     /// <summary>
@@ -301,6 +321,7 @@ public static partial class Mt32EmuNative
     /// The new value will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_analog_output_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetAnalogOutputMode(nint context, Mt32EmuAnalogOutputMode analogOutputMode);
 
     /// <summary>
@@ -314,6 +335,7 @@ public static partial class Mt32EmuNative
     /// The new value will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_stereo_output_samplerate")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetStereoOutputSamplerate(nint context, double samplerate);
 
     /// <summary>
@@ -326,6 +348,7 @@ public static partial class Mt32EmuNative
     /// The new value will take effect upon the next call to <see cref="OpenSynth"/>.
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_samplerate_conversion_quality")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetSamplerateConversionQuality(nint context, Mt32EmuSamplerateConversionQuality quality);
 
     /// <summary>
@@ -335,6 +358,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="rendererType">The desired renderer type.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_select_renderer_type")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SelectRendererType(nint context, Mt32EmuRendererType rendererType);
 
     /// <summary>
@@ -343,6 +367,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The currently selected renderer type.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_selected_renderer_type")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuRendererType GetSelectedRendererType(nint context);
 
     // --- Synth open/close ---
@@ -353,6 +378,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_open_synth")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode OpenSynth(nint context);
 
     /// <summary>
@@ -360,6 +386,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <param name="context">The emulation context.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_close_synth")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void CloseSynth(nint context);
 
     /// <summary>
@@ -368,6 +395,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the synth is open, otherwise <see cref="Mt32EmuBoolean.False"/>.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_open")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsOpen(nint context);
 
     /// <summary>
@@ -376,6 +404,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The actual output sample rate in Hz.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_actual_stereo_output_samplerate")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetActualStereoOutputSamplerate(nint context);
 
     /// <summary>
@@ -385,6 +414,7 @@ public static partial class Mt32EmuNative
     /// <param name="outputTimestamp">Timestamp in output samples.</param>
     /// <returns>Equivalent timestamp in synth samples (32000 Hz).</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_convert_output_to_synth_timestamp")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint ConvertOutputToSynthTimestamp(nint context, uint outputTimestamp);
 
     /// <summary>
@@ -394,6 +424,7 @@ public static partial class Mt32EmuNative
     /// <param name="synthTimestamp">Timestamp in synth samples (32000 Hz).</param>
     /// <returns>Equivalent timestamp in output samples.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_convert_synth_to_output_timestamp")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint ConvertSynthToOutputTimestamp(nint context, uint synthTimestamp);
 
     // --- MIDI event queue ---
@@ -403,6 +434,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <param name="context">The emulation context.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_flush_midi_queue")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void FlushMidiQueue(nint context);
 
     /// <summary>
@@ -413,6 +445,7 @@ public static partial class Mt32EmuNative
     /// <param name="queueSize">The desired queue size.</param>
     /// <returns>The actual queue size being used.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_midi_event_queue_size")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint SetMidiEventQueueSize(nint context, uint queueSize);
 
     /// <summary>
@@ -425,6 +458,7 @@ public static partial class Mt32EmuNative
     /// </param>
     /// <remarks>The queue is flushed and recreated so its size remains intact.</remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_configure_midi_event_queue_sysex_storage")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void ConfigureMidiEventQueueSysexStorage(nint context, uint storageBufferSize);
 
     /// <summary>
@@ -434,6 +468,7 @@ public static partial class Mt32EmuNative
     /// <param name="midiReceiver">The MIDI receiver interface. Pass <c>default</c> to restore default behaviour.</param>
     /// <param name="instanceData">User-supplied instance data pointer passed to MIDI receiver callbacks.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_midi_receiver")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetMidiReceiver(nint context, Mt32EmuMidiReceiverI midiReceiver, nint instanceData);
 
     /// <summary>
@@ -443,6 +478,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The total number of samples rendered at 32000 Hz.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_internal_rendered_sample_count")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetInternalRenderedSampleCount(nint context);
 
     // --- MIDI input (enqueued) ---
@@ -456,6 +492,7 @@ public static partial class Mt32EmuNative
     /// <param name="length">Length of the stream in bytes.</param>
     /// <remarks>The total length of a fragmented SysEx message must not exceed 32768 bytes.</remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_parse_stream")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void ParseStream(nint context, nint stream, uint length);
 
     /// <summary>
@@ -466,6 +503,7 @@ public static partial class Mt32EmuNative
     /// <param name="length">Length of the stream in bytes.</param>
     /// <param name="timestamp">Playback timestamp in synth samples (32000 Hz).</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_parse_stream_at")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void ParseStreamAt(nint context, nint stream, uint length, uint timestamp);
 
     /// <summary>
@@ -475,6 +513,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="message">The 32-bit encoded MIDI message.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_short_message")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void PlayShortMessage(nint context, uint message);
 
     /// <summary>
@@ -484,6 +523,7 @@ public static partial class Mt32EmuNative
     /// <param name="message">The 32-bit encoded MIDI message.</param>
     /// <param name="timestamp">Playback timestamp in synth samples (32000 Hz).</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_short_message_at")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void PlayShortMessageAt(nint context, uint message, uint timestamp);
 
     /// <summary>
@@ -493,6 +533,7 @@ public static partial class Mt32EmuNative
     /// <param name="msg">The 32-bit encoded MIDI message with status byte.</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success or a negative error code.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_msg")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode PlayMsg(nint context, uint msg);
 
     /// <summary>
@@ -503,6 +544,7 @@ public static partial class Mt32EmuNative
     /// <param name="len">Length of the SysEx data in bytes.</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success or a negative error code.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_sysex")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode PlaySysex(nint context, nint sysex, uint len);
 
     /// <summary>
@@ -513,6 +555,7 @@ public static partial class Mt32EmuNative
     /// <param name="timestamp">Playback timestamp in synth samples (32000 Hz).</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success or a negative error code.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_msg_at")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode PlayMsgAt(nint context, uint msg, uint timestamp);
 
     /// <summary>
@@ -524,6 +567,7 @@ public static partial class Mt32EmuNative
     /// <param name="timestamp">Playback timestamp in synth samples (32000 Hz).</param>
     /// <returns><see cref="Mt32EmuReturnCode.Ok"/> upon success or a negative error code.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_sysex_at")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuReturnCode PlaySysexAt(nint context, nint sysex, uint len, uint timestamp);
 
     // --- MIDI input (immediate / non-queued) ---
@@ -539,6 +583,7 @@ public static partial class Mt32EmuNative
     /// <para>The calling thread must be synchronised with the rendering thread or be the same thread.</para>
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_msg_now")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void PlayMsgNow(nint context, uint msg);
 
     /// <summary>
@@ -554,6 +599,7 @@ public static partial class Mt32EmuNative
     /// <para>The calling thread must be synchronised with the rendering thread or be the same thread.</para>
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_msg_on_part")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void PlayMsgOnPart(nint context, byte partNumber, byte command, byte data1, byte data2);
 
     /// <summary>
@@ -567,6 +613,7 @@ public static partial class Mt32EmuNative
     /// <para>The calling thread must be synchronised with the rendering thread or be the same thread.</para>
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_play_sysex_now")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void PlaySysexNow(nint context, nint sysex, uint len);
 
     /// <summary>
@@ -581,6 +628,7 @@ public static partial class Mt32EmuNative
     /// <para>The calling thread must be synchronised with the rendering thread or be the same thread.</para>
     /// </remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_write_sysex")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void WriteSysex(nint context, byte channel, nint sysex, uint len);
 
     // --- Reverb settings ---
@@ -591,6 +639,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="reverbEnabled">Whether reverb output should be enabled.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_reverb_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetReverbEnabled(nint context, Mt32EmuBoolean reverbEnabled);
 
     /// <summary>
@@ -599,6 +648,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if reverb is enabled.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_reverb_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsReverbEnabled(nint context);
 
     /// <summary>
@@ -607,6 +657,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="reverbOverridden">Whether reverb settings should be overridden.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_reverb_overridden")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetReverbOverridden(nint context, Mt32EmuBoolean reverbOverridden);
 
     /// <summary>
@@ -615,6 +666,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if reverb is overridden.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_reverb_overridden")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsReverbOverridden(nint context);
 
     /// <summary>
@@ -626,6 +678,7 @@ public static partial class Mt32EmuNative
     /// When <see cref="Mt32EmuBoolean.False"/>, forces new generation (CM-32L/LAPC-I) reverb.
     /// </param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_reverb_compatibility_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetReverbCompatibilityMode(nint context, Mt32EmuBoolean mt32CompatibleMode);
 
     /// <summary>
@@ -634,6 +687,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if using old MT-32 compatible reverb.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_mt32_reverb_compatibility_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsMt32ReverbCompatibilityMode(nint context);
 
     /// <summary>
@@ -642,6 +696,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the default reverb is MT-32 compatible.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_default_reverb_mt32_compatible")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsDefaultReverbMt32Compatible(nint context);
 
     /// <summary>
@@ -653,6 +708,7 @@ public static partial class Mt32EmuNative
     /// When <see cref="Mt32EmuBoolean.False"/> (default), unused buffers are freed to save memory.
     /// </param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_preallocate_reverb_memory")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void PreallocateReverbMemory(nint context, Mt32EmuBoolean enabled);
 
     // --- DAC and MIDI mode ---
@@ -664,6 +720,7 @@ public static partial class Mt32EmuNative
     /// <param name="mode">The desired DAC input mode.</param>
     /// <seealso cref="Mt32EmuDacInputMode"/>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_dac_input_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetDacInputMode(nint context, Mt32EmuDacInputMode mode);
 
     /// <summary>
@@ -672,6 +729,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The current DAC input mode.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_dac_input_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuDacInputMode GetDacInputMode(nint context);
 
     /// <summary>
@@ -681,6 +739,7 @@ public static partial class Mt32EmuNative
     /// <param name="mode">The desired MIDI delay mode.</param>
     /// <seealso cref="Mt32EmuMidiDelayMode"/>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_midi_delay_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetMidiDelayMode(nint context, Mt32EmuMidiDelayMode mode);
 
     /// <summary>
@@ -689,6 +748,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The current MIDI delay mode.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_midi_delay_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuMidiDelayMode GetMidiDelayMode(nint context);
 
     // --- Output gain ---
@@ -700,6 +760,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="gain">The output gain factor.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_output_gain")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetOutputGain(nint context, float gain);
 
     /// <summary>
@@ -708,6 +769,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The current output gain.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_output_gain")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial float GetOutputGain(nint context);
 
     /// <summary>
@@ -717,6 +779,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="gain">The reverb output gain factor.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_reverb_output_gain")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetReverbOutputGain(nint context, float gain);
 
     /// <summary>
@@ -725,6 +788,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The current reverb output gain.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_reverb_output_gain")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial float GetReverbOutputGain(nint context);
 
     // --- Master volume override ---
@@ -737,6 +801,7 @@ public static partial class Mt32EmuNative
     /// <param name="volumeOverride">A value in range 0–100 to enable override, or a value outside this range to disable it.</param>
     /// <remarks>This setting persists across synth reopening.</remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_master_volume_override")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetMasterVolumeOverride(nint context, byte volumeOverride);
 
     /// <summary>
@@ -745,6 +810,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The overridden master volume or a value &gt;100 if no override is active.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_master_volume_override")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial byte GetMasterVolumeOverride(nint context);
 
     // --- Part volume override ---
@@ -758,6 +824,7 @@ public static partial class Mt32EmuNative
     /// <param name="volumeOverride">A value in range 0–100 to enable override, or a value outside this range to disable it.</param>
     /// <remarks>Setting <paramref name="volumeOverride"/> to 0 completely mutes the part (unlike real hardware behaviour).</remarks>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_part_volume_override")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetPartVolumeOverride(nint context, byte partNumber, byte volumeOverride);
 
     /// <summary>
@@ -767,6 +834,7 @@ public static partial class Mt32EmuNative
     /// <param name="partNumber">Part number: 0–7 for Part 1–8, or 8 for Rhythm.</param>
     /// <returns>The overridden volume or a value &gt;100 if no override is active.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_part_volume_override")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial byte GetPartVolumeOverride(nint context, byte partNumber);
 
     // --- Stereo and quality settings ---
@@ -777,6 +845,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="enabled">Whether to reverse stereo channels.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_reversed_stereo_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetReversedStereoEnabled(nint context, Mt32EmuBoolean enabled);
 
     /// <summary>
@@ -785,6 +854,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if stereo is reversed.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_reversed_stereo_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsReversedStereoEnabled(nint context);
 
     /// <summary>
@@ -794,6 +864,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="enabled">Whether to enable NiceAmpRamp mode.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_nice_amp_ramp_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetNiceAmpRampEnabled(nint context, Mt32EmuBoolean enabled);
 
     /// <summary>
@@ -802,6 +873,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if NiceAmpRamp is enabled.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_nice_amp_ramp_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsNiceAmpRampEnabled(nint context);
 
     /// <summary>
@@ -811,6 +883,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="enabled">Whether to enable NicePanning mode.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_nice_panning_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetNicePanningEnabled(nint context, Mt32EmuBoolean enabled);
 
     /// <summary>
@@ -819,6 +892,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if NicePanning is enabled.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_nice_panning_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsNicePanningEnabled(nint context);
 
     /// <summary>
@@ -828,6 +902,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="enabled">Whether to enable NicePartialMixing mode.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_nice_partial_mixing_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetNicePartialMixingEnabled(nint context, Mt32EmuBoolean enabled);
 
     /// <summary>
@@ -836,6 +911,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if NicePartialMixing is enabled.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_nice_partial_mixing_enabled")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsNicePartialMixingEnabled(nint context);
 
     // --- Audio rendering ---
@@ -847,6 +923,7 @@ public static partial class Mt32EmuNative
     /// <param name="stream">Output buffer for interleaved stereo samples. Must hold at least <paramref name="len"/> × 2 elements.</param>
     /// <param name="len">Number of stereo frames to render (not bytes; one frame = 2 samples = 4 bytes).</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_render_bit16s")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void RenderBit16s(nint context, [Out] short[] stream, uint len);
 
     /// <summary>
@@ -856,6 +933,7 @@ public static partial class Mt32EmuNative
     /// <param name="stream">Output buffer for interleaved stereo float samples. Must hold at least <paramref name="len"/> × 2 elements.</param>
     /// <param name="len">Number of stereo frames to render.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_render_float")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void RenderFloat(nint context, [Out] float[] stream, uint len);
 
     /// <summary>
@@ -866,6 +944,7 @@ public static partial class Mt32EmuNative
     /// <param name="streams">The DAC output stream pointers. Any stream pointer may be <see cref="nint.Zero"/> to skip it.</param>
     /// <param name="len">Number of samples to render.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_render_bit16s_streams")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void RenderBit16sStreams(nint context, ref Mt32EmuDacOutputBit16sStreams streams, uint len);
 
     /// <summary>
@@ -876,6 +955,7 @@ public static partial class Mt32EmuNative
     /// <param name="streams">The DAC output stream pointers. Any stream pointer may be <see cref="nint.Zero"/> to skip it.</param>
     /// <param name="len">Number of samples to render.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_render_float_streams")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void RenderFloatStreams(nint context, ref Mt32EmuDacOutputFloatStreams streams, uint len);
 
     // --- Synth state queries ---
@@ -886,6 +966,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if any partial is active.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_has_active_partials")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean HasActivePartials(nint context);
 
     /// <summary>
@@ -894,6 +975,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the synth is active.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_active")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsActive(nint context);
 
     /// <summary>
@@ -902,6 +984,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>The maximum partial count.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_partial_count")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetPartialCount(nint context);
 
     /// <summary>
@@ -911,6 +994,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns>A 32-bit value with the lower 9 bits representing part states.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_part_states")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetPartStates(nint context);
 
     /// <summary>
@@ -920,6 +1004,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <param name="partialStates">Array to receive partial states. Must be large enough to hold all partials.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_partial_states")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void GetPartialStates(nint context, [Out] byte[] partialStates);
 
     /// <summary>
@@ -931,6 +1016,7 @@ public static partial class Mt32EmuNative
     /// <param name="velocities">Array to receive velocities of playing notes.</param>
     /// <returns>The number of currently playing notes on the specified part.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_playing_notes")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial uint GetPlayingNotes(nint context, byte partNumber, [Out] byte[] keys, [Out] byte[] velocities);
 
     /// <summary>
@@ -942,6 +1028,7 @@ public static partial class Mt32EmuNative
     /// Pointer to a null-terminated string. Valid until the next rendering or immediate SysEx processing call.
     /// </returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_patch_name")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial nint GetPatchNamePtr(nint context, byte partNumber);
 
     /// <summary>
@@ -967,6 +1054,7 @@ public static partial class Mt32EmuNative
     /// <param name="timbreNumber">Timbre number: 0–63 for banks other than RHYTHM.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the timbre was found and the name written.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_sound_group_name")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean GetSoundGroupName(nint context, [Out] byte[] soundGroupName, byte timbreGroup, byte timbreNumber);
 
     /// <summary>
@@ -980,6 +1068,7 @@ public static partial class Mt32EmuNative
     /// <param name="timbreNumber">Timbre number: 0–63 for banks other than RHYTHM.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the timbre was found and the name written.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_sound_name")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean GetSoundName(nint context, [Out] byte[] soundName, byte timbreGroup, byte timbreNumber);
 
     // --- Memory access ---
@@ -992,6 +1081,7 @@ public static partial class Mt32EmuNative
     /// <param name="len">Number of bytes to read.</param>
     /// <param name="data">Array to receive the memory contents.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_read_memory")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void ReadMemory(nint context, uint addr, uint len, [Out] byte[] data);
 
     // --- Display emulation ---
@@ -1006,6 +1096,7 @@ public static partial class Mt32EmuNative
     /// </param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the MIDI MESSAGE LED is ON.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_get_display_state")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean GetDisplayState(nint context, [Out] byte[] targetBuffer, Mt32EmuBoolean narrowLcd);
 
     /// <summary>
@@ -1013,6 +1104,7 @@ public static partial class Mt32EmuNative
     /// </summary>
     /// <param name="context">The emulation context.</param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_main_display_mode")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetMainDisplayMode(nint context);
 
     /// <summary>
@@ -1024,6 +1116,7 @@ public static partial class Mt32EmuNative
     /// When <see cref="Mt32EmuBoolean.False"/>, forces new-gen (CM-32L/LAPC-I) display behaviour.
     /// </param>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_set_display_compatibility")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial void SetDisplayCompatibility(nint context, Mt32EmuBoolean oldMt32CompatibilityEnabled);
 
     /// <summary>
@@ -1032,6 +1125,7 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if old MT-32 display compatibility is active.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_display_old_mt32_compatible")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsDisplayOldMt32Compatible(nint context);
 
     /// <summary>
@@ -1040,5 +1134,6 @@ public static partial class Mt32EmuNative
     /// <param name="context">The emulation context.</param>
     /// <returns><see cref="Mt32EmuBoolean.True"/> if the default display is old MT-32 compatible.</returns>
     [LibraryImport(LibraryName, EntryPoint = "mt32emu_is_default_display_old_mt32_compatible")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial Mt32EmuBoolean IsDefaultDisplayOldMt32Compatible(nint context);
 }
