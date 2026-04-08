@@ -97,7 +97,21 @@
     <Exec Command="cmake -S &quot;$(_NativeSrc)&quot; -B &quot;$(_NativeBld)&quot; $(_CmakeArgs)" />
     <Exec Command="cmake --build &quot;$(_NativeBld)&quot; --config Release" />
     <MakeDir Directories="$(_DestDir)" />
-    <Copy SourceFiles="$(_BuiltLib)" DestinationFolder="$(_DestDir)" />
+    <!--
+      On Windows, cmake names the DLL with the major version suffix (e.g. mt32emu-2.dll).
+      Find the actual file and copy it as mt32emu.dll for .NET native library probing.
+    -->
+    <ItemGroup>
+      <_BuiltLibToPlace Condition="$([MSBuild]::IsOSPlatform('Windows'))"
+                        Include="$(_NativeBld)/Release/mt32emu*.dll" />
+      <_BuiltLibToPlace Condition="!$([MSBuild]::IsOSPlatform('Windows'))"
+                        Include="$(_BuiltLib)" />
+    </ItemGroup>
+    <Error Condition="'@(_BuiltLibToPlace)' == ''"
+           Text="No native library found in $(_NativeBld)/Release/mt32emu*.dll after cmake build (Windows) or $(_BuiltLib) (other platforms)." />
+    <Copy SourceFiles="@(_BuiltLibToPlace)"
+          DestinationFiles="$(_DestDir)/$(_LibName)"
+          OverwriteReadOnlyFiles="true" />
     <Message Text="Placed $(_LibName) in $(_DestDir)/" Importance="high" />
   </Target>
 

@@ -93,6 +93,21 @@ jobs:
       - name: Build native library
         run: cmake --build build --config Release
 
+      - name: Normalize Windows DLL name
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # cmake names the Windows DLL with the major version suffix (e.g. mt32emu-2.dll)
+          # Copy to the fixed name mt32emu.dll that the NuGet package and P/Invoke expect.
+          src=$(find build/Release -name "mt32emu-*.dll" -type f -print -quit)
+          if [ -z "$src" ]; then
+            echo "::error::No mt32emu-*.dll found in build/Release/"
+            exit 1
+          fi
+          cp "$src" "build/Release/mt32emu.dll"
+          echo "Copied ${src} -> build/Release/mt32emu.dll"
+
       - name: Upload native artifact
         uses: actions/upload-artifact@v4
         with:
@@ -166,10 +181,14 @@ jobs:
             dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
           fi
 
-  pack-nuget:
+  pack-and-publish-nuget:
     needs: [build-native, test-dotnet]
     runs-on: ubuntu-latest
-    name: Pack NuGet
+    name: Pack & Publish NuGet
+    environment: production
+    permissions:
+      id-token: write
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -205,7 +224,7 @@ jobs:
         with:
           path: artifacts
 
-      - name: Arrange native libraries into runtime folders
+      - name: Arrange all platform native libraries into runtime folders
         run: |
           set -euo pipefail
           PROJECT_DIR="mt32emu-dotnet/Mt32Emu.Native"
@@ -234,10 +253,10 @@ jobs:
             echo "Copied ${src} -> ${dest}/${lib}"
           done
 
-      - name: Build and pack NuGet package
-        run: dotnet pack mt32emu-dotnet/Mt32Emu.Native/Mt32Emu.Native.csproj -c Release -o nupkg /p:Version=${{ steps.version.outputs.version }}
+      - name: Pack unified NuGet package (all platforms)
+        run: dotnet pack mt32emu-dotnet/Mt32Emu.Native/Mt32Emu.Native.csproj -c Release -o nupkg /p:Version=${{ steps.version.outputs.version }} /p:SkipNativeBuild=true
 
-      - name: Upload NuGet package
+      - name: Upload NuGet package artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-package
@@ -246,35 +265,16 @@ jobs:
             nupkg/*.snupkg
           if-no-files-found: error
 
-  publish-nuget:
-    needs: pack-nuget
-    runs-on: ubuntu-latest
-    name: Publish NuGet
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    environment: production
-    permissions:
-      id-token: write
-      packages: write
-
-    steps:
-      - name: Download NuGet package
-        uses: actions/download-artifact@v4
-        with:
-          name: nuget-package
-          path: nupkg
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
       - name: NuGet login (trusted publishing via OIDC)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: nuget/login@v1
         with:
           user: ${{ vars.NUGET_USER }}
 
       - name: Publish to NuGet.org
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         run: dotnet nuget push nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Publish to GitHub Packages
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         run: dotnet nuget push nupkg/*.nupkg --api-key "${{ secrets.GITHUB_TOKEN }}" --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
