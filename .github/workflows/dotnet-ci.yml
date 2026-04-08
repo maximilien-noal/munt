@@ -93,6 +93,21 @@ jobs:
       - name: Build native library
         run: cmake --build build --config Release
 
+      - name: Normalize Windows DLL name
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # cmake names the Windows DLL with the major version suffix (e.g. mt32emu-2.dll)
+          # Copy to the fixed name mt32emu.dll that the NuGet package and P/Invoke expect.
+          src=$(find build/Release -name "mt32emu-*.dll" -type f -print -quit)
+          if [ -z "$src" ]; then
+            echo "::error::No mt32emu-*.dll found in build/Release/"
+            exit 1
+          fi
+          cp "$src" "build/Release/mt32emu.dll"
+          echo "Copied ${src} -> build/Release/mt32emu.dll"
+
       - name: Upload native artifact
         uses: actions/upload-artifact@v4
         with:
