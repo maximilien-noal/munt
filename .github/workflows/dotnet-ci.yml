@@ -133,7 +133,7 @@ jobs:
           - os: ubuntu-24.04-arm
             rid: linux-arm64
             lib: libmt32emu.so
-          - os: macos-latest
+          - os: macos-13
             rid: osx-x64
             lib: libmt32emu.dylib
           - os: macos-latest
@@ -173,13 +173,7 @@ jobs:
           echo "Placed ${src} -> ${dest}/${{ matrix.lib }}"
 
       - name: Run BDD tests
-        shell: bash
-        run: |
-          if [ "${{ matrix.rid }}" = "osx-x64" ]; then
-            arch -x86_64 dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
-          else
-            dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
-          fi
+        run: dotnet test mt32emu-dotnet/Mt32Emu.Native.Specs/Mt32Emu.Native.Specs.csproj -c Release --verbosity normal
 
   pack-and-publish-nuget:
     needs: [build-native, test-dotnet]

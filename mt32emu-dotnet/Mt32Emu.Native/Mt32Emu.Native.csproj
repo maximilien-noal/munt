@@ -38,6 +38,40 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <!--
+    Detect the current platform RID so we can resolve the correct native library
+    for both build output (CopyToOutputDirectory) and cmake auto-build.
+  -->
+  <PropertyGroup>
+    <_NativeProcArch>$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)</_NativeProcArch>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('Linux'))   and '$(_NativeProcArch)' == 'X64'">linux-x64</_NativeRid>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('Linux'))   and '$(_NativeProcArch)' == 'Arm64'">linux-arm64</_NativeRid>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('OSX'))     and '$(_NativeProcArch)' == 'X64'">osx-x64</_NativeRid>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('OSX'))     and '$(_NativeProcArch)' == 'Arm64'">osx-arm64</_NativeRid>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_NativeProcArch)' == 'X64'">win-x64</_NativeRid>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_NativeProcArch)' == 'X86'">win-x86</_NativeRid>
+    <_NativeRid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_NativeProcArch)' == 'Arm64'">win-arm64</_NativeRid>
+    <_NativeLibName Condition="$([MSBuild]::IsOSPlatform('Linux'))">libmt32emu.so</_NativeLibName>
+    <_NativeLibName Condition="$([MSBuild]::IsOSPlatform('OSX'))">libmt32emu.dylib</_NativeLibName>
+    <_NativeLibName Condition="$([MSBuild]::IsOSPlatform('Windows'))">mt32emu.dll</_NativeLibName>
+  </PropertyGroup>
+
+  <!--
+    Copy the platform-specific native library to the build output directory.
+    This ensures the library is available when running tests via a project-to-project
+    reference (P2P), where NuGet runtimes/ probing does not apply automatically.
+    The item is excluded from the NuGet package (Pack=false) as _IncludeNativeLibraries
+    handles packaging separately.
+  -->
+  <ItemGroup>
+    <Content Include="runtimes/$(_NativeRid)/native/$(_NativeLibName)"
+             Condition="'$(_NativeRid)' != '' and '$(_NativeLibName)' != '' and Exists('runtimes/$(_NativeRid)/native/$(_NativeLibName)')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>$(_NativeLibName)</Link>
+      <Pack>false</Pack>
+    </Content>
+  </ItemGroup>
+
   <!-- SourceLink -->
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
@@ -69,31 +103,17 @@
       <_CmakeArgs>-DCMAKE_BUILD_TYPE=Release -Dlibmt32emu_SHARED=TRUE -Dlibmt32emu_C_INTERFACE=TRUE</_CmakeArgs>
       <_CmakeArgs Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(_CmakeArgs) -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded</_CmakeArgs>
 
-      <!-- Detect current platform -->
-      <_ProcArch>$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)</_ProcArch>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('Linux'))   and '$(_ProcArch)' == 'X64'">linux-x64</_Rid>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('Linux'))   and '$(_ProcArch)' == 'Arm64'">linux-arm64</_Rid>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('OSX'))     and '$(_ProcArch)' == 'X64'">osx-x64</_Rid>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('OSX'))     and '$(_ProcArch)' == 'Arm64'">osx-arm64</_Rid>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_ProcArch)' == 'X64'">win-x64</_Rid>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_ProcArch)' == 'X86'">win-x86</_Rid>
-      <_Rid Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(_ProcArch)' == 'Arm64'">win-arm64</_Rid>
-
-      <_LibName Condition="$([MSBuild]::IsOSPlatform('Linux'))">libmt32emu.so</_LibName>
-      <_LibName Condition="$([MSBuild]::IsOSPlatform('OSX'))">libmt32emu.dylib</_LibName>
-      <_LibName Condition="$([MSBuild]::IsOSPlatform('Windows'))">mt32emu.dll</_LibName>
-
       <!-- cmake output path differs: build/ on Unix, build/Release/ on Windows MSVC -->
-      <_BuiltLib Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(_NativeBld)/$(_LibName)</_BuiltLib>
-      <_BuiltLib Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(_NativeBld)/Release/$(_LibName)</_BuiltLib>
+      <_BuiltLib Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(_NativeBld)/$(_NativeLibName)</_BuiltLib>
+      <_BuiltLib Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(_NativeBld)/Release/$(_NativeLibName)</_BuiltLib>
 
-      <_DestDir>runtimes/$(_Rid)/native</_DestDir>
+      <_DestDir>runtimes/$(_NativeRid)/native</_DestDir>
     </PropertyGroup>
 
-    <Error Condition="'$(_Rid)' == ''"
-           Text="Unsupported platform or architecture for native build. Detected ProcessArchitecture='$(_ProcArch)'. Supported targets are: win-x86, win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64." />
+    <Error Condition="'$(_NativeRid)' == ''"
+           Text="Unsupported platform or architecture for native build. Detected ProcessArchitecture='$(_NativeProcArch)'. Supported targets are: win-x86, win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64." />
 
-    <Message Text="No native libraries found in runtimes/. Building for $(_Rid) via cmake..." Importance="high" />
+    <Message Text="No native libraries found in runtimes/. Building for $(_NativeRid) via cmake..." Importance="high" />
     <Exec Command="cmake -S &quot;$(_NativeSrc)&quot; -B &quot;$(_NativeBld)&quot; $(_CmakeArgs)" />
     <Exec Command="cmake --build &quot;$(_NativeBld)&quot; --config Release" />
     <MakeDir Directories="$(_DestDir)" />
@@ -110,9 +130,9 @@
     <Error Condition="'@(_BuiltLibToPlace)' == ''"
            Text="No native library found in $(_NativeBld)/Release/mt32emu*.dll after cmake build (Windows) or $(_BuiltLib) (other platforms)." />
     <Copy SourceFiles="@(_BuiltLibToPlace)"
-          DestinationFiles="$(_DestDir)/$(_LibName)"
+          DestinationFiles="$(_DestDir)/$(_NativeLibName)"
           OverwriteReadOnlyFiles="true" />
-    <Message Text="Placed $(_LibName) in $(_DestDir)/" Importance="high" />
+    <Message Text="Placed $(_NativeLibName) in $(_DestDir)/" Importance="high" />
   </Target>
 
   <!--
